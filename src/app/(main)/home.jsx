@@ -1,3 +1,5 @@
+import Loading from "@/components/Loading";
+import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
@@ -5,34 +7,96 @@ import { hp, wp } from "@/helpers/common";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { fetchPosts } from "../../../services/postService";
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import {
+  fetchPosts,
+  subscribeToPosts,
+  unsubscribeFromPosts,
+} from "../../../services/postService";
 
 var limit = 0;
 
 const Home = () => {
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
+  const router = useRouter();
   const [posts, setPosts] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
 
   const getPosts = async () => {
-    const limit = limit + 10; // Increase the limit by 10 for each fetch
+    if (!hasMorePosts) {
+      return;
+    }
+
+    limit = limit + 6;
+    console.log("Fetching posts with limit:", limit);
     const { success, data, msg } = await fetchPosts(limit);
+
     if (success) {
-      console.log("Fetched posts:", data);
+      if (posts.length > 0 && data.length === posts.length) {
+        setHasMorePosts(false);
+      }
       setPosts(data);
     } else {
       console.error("Error fetching posts:", msg);
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    limit = 6; // Reset limit to initial value on refresh
+    await getPosts();
+    setRefreshing(false);
+  };
+
   useEffect(() => {
-    getPosts();
+    const postChannel = subscribeToPosts(setPosts);
+
+    return () => {
+      unsubscribeFromPosts(postChannel);
+    };
   }, []);
+
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg="white" scrollable={false}>
       <View style={styles.container}>
         {/* header */}
         <HomeHeader />
+
+        {/* posts */}
+        <FlatList
+          data={posts}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listStyle}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          onEndReached={() => getPosts()}
+          onEndReachedThreshold={0.3}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No posts yet</Text>
+          }
+          ListFooterComponent={
+            hasMorePosts ? (
+              <View style={{ marginVertical: posts.length === 0 ? 200 : 30 }}>
+                <Loading />
+              </View>
+            ) : (
+              <Text style={styles.noMoreText}>No more posts</Text>
+            )
+          }
+          renderItem={({ item }) => (
+            <PostCard item={item} currentUser={user} router={router} />
+          )}
+        />
       </View>
     </ScreenWrapper>
   );
@@ -95,5 +159,37 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 18,
+  },
+  listStyle: {
+    paddingTop: 10,
+    paddingBottom: 60,
+  },
+  post: {
+    padding: 14,
+    borderRadius: theme.radius?.md ?? 12,
+    borderWidth: 1,
+    borderColor: theme.colors?.gray ?? "#e0e0e0",
+    marginBottom: 14,
+  },
+  postTitle: {
+    fontSize: hp(2),
+    fontWeight: theme.fonts.semibold,
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  postContent: {
+    fontSize: hp(1.8),
+    color: theme.colors.textLight,
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 100,
+    fontSize: hp(2),
+    color: theme.colors.textLight,
+  },
+  noMoreText: {
+    textAlign: "center",
+    fontSize: hp(1.6),
+    color: theme.colors.textLight,
   },
 });
