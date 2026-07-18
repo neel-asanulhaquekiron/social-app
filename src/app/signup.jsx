@@ -9,6 +9,7 @@ import {
   validateName,
   validatePassword,
 } from "@/helpers/validator";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
@@ -54,8 +55,24 @@ const SignUp = () => {
 
     setLoading(true);
     try {
-      // await signUpApi(nameRef.current, emailRef.current, passwordRef.current);
-      // navigate on success
+      const name = nameRef.current.trim();
+      const email = emailRef.current.trim();
+      const password = passwordRef.current;
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            email,
+          },
+        },
+      });
+
+      if (error) {
+        Alert.alert("Sign Up Failed", error.message);
+      }
     } catch (error) {
       Alert.alert("Sign Up Failed", error?.message || "Something went wrong");
     } finally {
