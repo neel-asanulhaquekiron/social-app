@@ -10,6 +10,8 @@ export const theme = {
     textLight: "#7c7c7c",
     textDark: "#1d1d1d",
 
+    error: "#ff3333",
+
     rose: "#ef4444",
     roseLight: "#f87171",
   },
