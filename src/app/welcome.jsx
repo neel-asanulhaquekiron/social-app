@@ -3,7 +3,7 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 const Welcome = () => {
   return (
@@ -27,6 +27,19 @@ const Welcome = () => {
               // Handle button press
             }}
           />
+          <View style={styles.bottomTextContainer}>
+            <Text style={styles.loginText}>Already have an account?</Text>
+            <Pressable>
+              <Text
+                style={[
+                  styles.loginText,
+                  { color: theme.colors.primary, fontWeight: theme.fonts.bold },
+                ]}
+              >
+                Log In
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </ScreenWrapper>
@@ -58,5 +71,16 @@ const styles = StyleSheet.create({
   footer: {
     gap: 30,
     width: "100%",
+  },
+  bottomTextContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 5,
+  },
+  loginText: {
+    textAlign: "center",
+    color: theme.colors.text,
+    fontSize: hp(1.6),
   },
 });
