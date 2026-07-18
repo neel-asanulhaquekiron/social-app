@@ -4,6 +4,7 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import { validateEmail } from "@/helpers/validator";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
@@ -30,8 +31,17 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // await loginApi(emailRef.current, passwordRef.current);
-      // navigate on success
+      const email = emailRef.current.trim();
+      const password = passwordRef.current.trim();
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        Alert.alert("Login Failed", error.message);
+      }
     } catch (error) {
       Alert.alert("Login Failed", error?.message || "Something went wrong");
     } finally {
