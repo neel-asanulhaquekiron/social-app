@@ -3,35 +3,41 @@ import Input from "@/components/Input";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
-import { validateEmail } from "@/helpers/validator";
+import { loginSchema } from "@/helpers/validationSchemas";
+import { supabase } from "@/lib/supabase";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useRef, useState } from "react";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 const Login = () => {
   const router = useRouter();
-  const emailRef = useRef("");
-  const passwordRef = useRef("");
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({ email: "" });
 
-  const validate = () => {
-    const emailError = validateEmail(emailRef.current);
-    setErrors({ email: emailError });
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+    mode: "onBlur",
+    reValidateMode: "onChange",
+  });
 
-    return !emailError;
-  };
-
-  const onSubmit = async () => {
-    if (!validate()) {
-      return;
-    }
-
+  const onSubmit = async ({ email, password }) => {
     setLoading(true);
     try {
-      // await loginApi(emailRef.current, passwordRef.current);
-      // navigate on success
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password.trim(),
+      });
+
+      if (error) {
+        Alert.alert("Login Failed", error.message);
+      }
     } catch (error) {
       Alert.alert("Login Failed", error?.message || "Something went wrong");
     } finally {
@@ -52,27 +58,49 @@ const Login = () => {
 
         <View style={styles.form}>
           <View>
-            <Input
-              placeholder="Enter your email"
-              inputRef={emailRef}
-              keyboardType="email-address"
-              onChangeText={(value) => (emailRef.current = value)}
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  placeholder="Enter your email"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
             />
-            {errors.email ? (
-              <Text style={styles.error}>{errors.email}</Text>
-            ) : null}
+            {errors.email && (
+              <Text style={styles.error}>{errors.email.message}</Text>
+            )}
           </View>
 
           <View>
-            <Input
-              placeholder="Enter your password"
-              inputRef={passwordRef}
-              secureTextEntry
-              onChangeText={(value) => (passwordRef.current = value)}
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  placeholder="Enter your password"
+                  secureTextEntry
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
             />
+            {errors.password && (
+              <Text style={styles.error}>{errors.password.message}</Text>
+            )}
           </View>
 
-          <Button title="Login" loading={loading} onPress={onSubmit} />
+          <Button
+            title="Login"
+            loading={loading}
+            onPress={handleSubmit(onSubmit)}
+          />
         </View>
 
         <View style={styles.footer}>
