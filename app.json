@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "social-app",
-    "slug": "social-app",
+    "slug": "asanul-haque",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.asanulhaquekironsteam.asanulhaque"
     },
     "web": {
       "output": "static",
@@ -37,6 +38,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "65ddd384-8c0b-48f3-9b2e-37ec71acb77a"
+      }
+    },
+    "owner": "asanulhaquekirons-team"
   }
 }
