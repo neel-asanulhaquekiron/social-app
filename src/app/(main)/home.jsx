@@ -3,9 +3,11 @@ import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 const Home = () => {
+  const router = useRouter();
   const onLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
