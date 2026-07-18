@@ -57,10 +57,11 @@ export default Welcome;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-around",
+    justifyContent: "center",
     alignItems: "center",
     backgroundColor: "white",
     paddingHorizontal: wp(4),
+    gap: 50,
   },
   title: {
     color: theme.colors.text,
