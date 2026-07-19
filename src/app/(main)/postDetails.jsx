@@ -28,7 +28,7 @@ import {
 } from "../../../services/postService";
 
 const PostDetails = () => {
-  const { postId } = useLocalSearchParams();
+  const { postId, commentId } = useLocalSearchParams();
   const { user } = useAuth();
   const router = useRouter();
   const inputRef = useRef("");
@@ -183,6 +183,7 @@ const PostDetails = () => {
                   //     postDetails?.userId === user?.id
                   //   }
                   //   onDelete={onDeleteComment}
+                  highlight={comment?.id == commentId}
                 />
               ))}
 
