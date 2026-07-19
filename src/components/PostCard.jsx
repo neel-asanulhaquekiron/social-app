@@ -14,6 +14,7 @@ const PostCard = ({
   hasShadow = true,
   onDelete,
   onEdit,
+  disableDetailsNavigation = false,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [likes, setLikes] = useState(item?.postLikes || []);
@@ -52,6 +53,12 @@ const PostCard = ({
     }
   };
 
+  const openPostDetails = () => {
+    if (!disableDetailsNavigation) {
+      router.push({ pathname: "postDetails", params: { postId: item?.id } });
+    }
+  };
+
   return (
     <View style={[styles.container, hasShadow && styles.shadow]}>
       <View style={styles.header}>
@@ -73,7 +80,7 @@ const PostCard = ({
       {/* footer actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => onLikePress()}>
+          <TouchableOpacity onPress={onLikePress}>
             <Ionicons
               name={liked ? "heart" : "heart-outline"}
               size={hp(2.6)}
@@ -84,7 +91,10 @@ const PostCard = ({
         </View>
 
         <View style={styles.footerButton}>
-          <TouchableOpacity>
+          <TouchableOpacity
+            disabled={disableDetailsNavigation}
+            onPress={openPostDetails}
+          >
             <Ionicons
               name="chatbubble-outline"
               size={hp(2.4)}
