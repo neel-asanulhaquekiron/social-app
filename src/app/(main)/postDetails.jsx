@@ -11,23 +11,24 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { createNotification } from "../../../services/notificationServices";
 import {
-    createComment,
-    deleteComment,
-    fetchPostById,
-    subscribeToComments,
-    unsubscribeFromChannel,
+  createComment,
+  deleteComment,
+  fetchPostById,
+  subscribeToComments,
+  unsubscribeFromChannel,
 } from "../../../services/postService";
 
 const PostDetails = () => {
-  const { postId } = useLocalSearchParams();
+  const { postId, commentId } = useLocalSearchParams();
   const { user } = useAuth();
   const router = useRouter();
   const inputRef = useRef("");
@@ -71,6 +72,18 @@ const PostDetails = () => {
     setSendingComment(false);
 
     if (success) {
+      if (user?.id !== postDetails?.userId) {
+        const notify = {
+          senderId: user?.id,
+          receiverId: postDetails?.userId,
+          title: "commented on your post",
+          data: JSON.stringify({
+            postId: postDetails?.id,
+            commentId: newComment?.id,
+          }),
+        };
+        await createNotification(notify);
+      }
       inputRef?.current?.clear();
       commentRef.current = "";
     } else {
@@ -170,6 +183,7 @@ const PostDetails = () => {
                   //     postDetails?.userId === user?.id
                   //   }
                   //   onDelete={onDeleteComment}
+                  highlight={comment?.id == commentId}
                 />
               ))}
 

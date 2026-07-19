@@ -16,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { subscribeToNotifications } from "../../../services/notificationServices";
 import {
   fetchPosts,
   subscribeToAllComments,
@@ -31,6 +32,7 @@ const Home = () => {
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   const getPosts = async () => {
     if (!hasMorePosts) {
@@ -61,10 +63,15 @@ const Home = () => {
   useEffect(() => {
     const postChannel = subscribeToPosts(setPosts);
     const commentChannel = subscribeToAllComments(setPosts);
+    const notificationChannel = subscribeToNotifications(
+      user?.id,
+      setNotificationCount,
+    );
 
     return () => {
       unsubscribeFromChannel(postChannel);
       unsubscribeFromChannel(commentChannel);
+      unsubscribeFromChannel(notificationChannel);
     };
   }, []);
 
@@ -72,7 +79,10 @@ const Home = () => {
     <ScreenWrapper bg="white" scrollable={false}>
       <View style={styles.container}>
         {/* header */}
-        <HomeHeader />
+        <HomeHeader
+          notificationCount={notificationCount}
+          setNotificationCount={setNotificationCount}
+        />
 
         {/* posts */}
         <FlatList
@@ -105,19 +115,31 @@ const Home = () => {
 
 export default Home;
 
-const HomeHeader = () => {
+const HomeHeader = ({ notificationCount, setNotificationCount }) => {
   const router = useRouter();
 
   return (
     <View style={styles.header}>
       <Text style={styles.title}>Social App</Text>
       <View style={styles.icons}>
-        <Pressable onPress={() => router.push("notifications")}>
+        <Pressable
+          onPress={() => {
+            setNotificationCount(0);
+            router.push("notifications");
+          }}
+        >
           <Ionicons
             name="notifications-outline"
             size={hp(3.2)}
             color={theme.colors.text}
           />
+          {notificationCount > 0 && (
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationBadgeText}>
+                {notificationCount}
+              </Text>
+            </View>
+          )}
         </Pressable>
 
         <Pressable onPress={() => router.push("newPost")}>
@@ -188,5 +210,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: hp(1.6),
     color: theme.colors.textLight,
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    height: hp(1.8),
+    width: hp(1.8),
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 20,
+    backgroundColor: theme.colors.roseLight,
+  },
+  notificationBadgeText: {
+    color: "white",
+    fontSize: hp(1.2),
+    fontWeight: theme.fonts.bold,
   },
 });
