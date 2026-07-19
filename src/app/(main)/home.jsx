@@ -18,8 +18,9 @@ import {
 } from "react-native";
 import {
   fetchPosts,
+  subscribeToAllComments,
   subscribeToPosts,
-  unsubscribeFromPosts,
+  unsubscribeFromChannel,
 } from "../../../services/postService";
 
 var limit = 0;
@@ -59,9 +60,11 @@ const Home = () => {
 
   useEffect(() => {
     const postChannel = subscribeToPosts(setPosts);
+    const commentChannel = subscribeToAllComments(setPosts);
 
     return () => {
-      unsubscribeFromPosts(postChannel);
+      unsubscribeFromChannel(postChannel);
+      unsubscribeFromChannel(commentChannel);
     };
   }, []);
 
