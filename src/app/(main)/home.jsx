@@ -1,3 +1,4 @@
+import Avatar from "@/components/Avatar";
 import Loading from "@/components/Loading";
 import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -81,9 +82,6 @@ const Home = () => {
           }
           onEndReached={() => getPosts()}
           onEndReachedThreshold={0.3}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No posts yet</Text>
-          }
           ListFooterComponent={
             hasMorePosts ? (
               <View style={{ marginVertical: posts.length === 0 ? 200 : 30 }}>
@@ -128,11 +126,7 @@ const HomeHeader = () => {
         </Pressable>
 
         <Pressable onPress={() => router.push("profile")}>
-          <Ionicons
-            name="person-circle-outline"
-            size={hp(3.2)}
-            color={theme.colors.text}
-          />
+          <Avatar size={hp(3.2)} color={theme.colors.text} />
         </Pressable>
       </View>
     </View>
