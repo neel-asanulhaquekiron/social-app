@@ -1,14 +1,13 @@
-import { supabase } from "@/lib/supabase";
+import { logout } from "@/services/authService";
 import { Alert } from "react-native";
 
-const logOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    Alert.alert("Logout Failed", error.message);
-  }
+const performLogout = async ({ setAuth, router }) => {
+  await logout();
+  setAuth(null);
+  router.replace("/welcome");
 };
 
-export const handleLogOut = () => {
+export const handleLogOut = ({ setAuth, router }) => {
   Alert.alert("Confirm", "Are you sure you want to log out?", [
     {
       text: "Cancel",
@@ -17,7 +16,7 @@ export const handleLogOut = () => {
     },
     {
       text: "Logout",
-      onPress: logOut,
+      onPress: () => performLogout({ setAuth, router }),
       style: "destructive",
     },
   ]);
