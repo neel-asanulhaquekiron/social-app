@@ -1,11 +1,11 @@
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { createNotification } from "@/services/notificationServices";
+import { createPostLike, removePostLike } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { createNotification } from "../../services/notificationServices";
-import { createPostLike, removePostLike } from "../../services/postService";
 import Avatar from "./Avatar";
 
 const MAX_LINES = 6;
