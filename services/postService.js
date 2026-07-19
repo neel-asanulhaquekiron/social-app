@@ -192,7 +192,12 @@ export const subscribeToComments = (postId, setPostDetails) => {
     .channel(`comments:${postId}`)
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "comments" },
+      {
+        event: "*",
+        schema: "public",
+        table: "comments",
+        filter: `postId=eq.${postId}`,
+      },
       async (payload) => {
         if (payload.eventType === "INSERT" && payload?.new?.id) {
           const newComment = { ...payload.new };
