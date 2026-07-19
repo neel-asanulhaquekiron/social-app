@@ -5,14 +5,19 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { handleLogOut } from "@/utils/logOut";
+import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, setAuth } = useAuth();
+  console.log("🚀 ~ Profile ~ user:", user);
+  const router = useRouter();
+
+  const onLogout = () => handleLogOut({ setAuth, router });
 
   return (
     <ScreenWrapper bg="white">
-      <UserHeader user={user} handleLogout={handleLogOut} />
+      <UserHeader user={user} handleLogout={onLogout} />
     </ScreenWrapper>
   );
 };

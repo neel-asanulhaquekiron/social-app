@@ -5,6 +5,13 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
+import { subscribeToNotifications } from "@/services/notificationServices";
+import {
+  fetchPosts,
+  subscribeToAllComments,
+  subscribeToPosts,
+  unsubscribeFromChannel,
+} from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,13 +23,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { subscribeToNotifications } from "../../../services/notificationServices";
-import {
-  fetchPosts,
-  subscribeToAllComments,
-  subscribeToPosts,
-  unsubscribeFromChannel,
-} from "../../../services/postService";
 
 var limit = 0;
 
