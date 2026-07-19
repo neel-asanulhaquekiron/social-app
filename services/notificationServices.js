@@ -53,7 +53,12 @@ export const subscribeToNotifications = (userId, setNotificationCount) => {
     .channel(`notifications:${userId}`)
     .on(
       "postgres_changes",
-      { event: "*", schema: "public", table: "notifications" },
+      {
+        event: "*",
+        schema: "public",
+        table: "notifications",
+        filter: `receiverId=eq.${userId}`,
+      },
       async (payload) => {
         if (payload.eventType === "INSERT" && payload?.new?.id) {
           setNotificationCount((prevCount) => prevCount + 1);
