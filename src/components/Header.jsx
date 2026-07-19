@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: hp(2.7),
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.bold,
     color: theme.colors.text,
     textAlign: "center",
     flex: 1,
