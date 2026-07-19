@@ -63,6 +63,85 @@ class Post {
       return { success: false, msg: error.message || "Something went wrong" };
     }
   }
+
+  static async createPostLike(postLike) {
+    try {
+      const { data, error } = await supabase
+        .from("postLikes")
+        .insert(postLike)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating post like:", error);
+        return { success: false, msg: error.message };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error creating post like:", error);
+      return { success: false, msg: error.message || "Something went wrong" };
+    }
+  }
+
+  static async removePostLike(postId, userId) {
+    try {
+      const { error } = await supabase
+        .from("postLikes")
+        .delete()
+        .eq("postId", postId)
+        .eq("userId", userId);
+
+      if (error) {
+        console.error("Error removing post like:", error);
+        return { success: false, msg: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error removing post like:", error);
+      return { success: false, msg: error.message || "Something went wrong" };
+    }
+  }
+
+  static async createComment(comment) {
+    try {
+      const { data, error } = await supabase
+        .from("comments")
+        .insert(comment)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error creating comment:", error);
+        return { success: false, msg: error.message };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      return { success: false, msg: error.message || "Something went wrong" };
+    }
+  }
+
+  static async deleteComment(commentId) {
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", commentId);
+
+      if (error) {
+        console.error("Error deleting comment:", error);
+        return { success: false, msg: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      return { success: false, msg: error.message || "Something went wrong" };
+    }
+  }
 }
 
 module.exports = Post;
