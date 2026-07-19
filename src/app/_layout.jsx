@@ -1,8 +1,8 @@
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { getStoredUser, getToken } from "@/services/authService";
+import { getUserData } from "@/services/userService";
 import { Stack, useRouter } from "expo-router";
 import { useEffect } from "react";
-import { getUserData } from "../../services/userService";
 
 const _layout = () => {
   return (
@@ -23,17 +23,33 @@ const MainLayout = () => {
     }
   };
 
+  // useEffect(() => {
+  //   supabase.auth.onAuthStateChange((_event, session) => {
+  //     if (session) {
+  //       setAuth(session.user);
+  //       updateUserData(session.user);
+  //       router.push("/home");
+  //     } else {
+  //       setAuth(null);
+  //       router.push("/welcome");
+  //     }
+  //   });
+  // }, []);
   useEffect(() => {
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setAuth(session.user);
-        updateUserData(session.user);
-        router.push("/home");
+    const checkAuth = async () => {
+      const token = await getToken();
+      const user = await getStoredUser();
+
+      if (token && user) {
+        setAuth(user);
+        router.replace("/home");
       } else {
         setAuth(null);
-        router.push("/welcome");
+        router.replace("/welcome");
       }
-    });
+    };
+
+    checkAuth();
   }, []);
   return <Stack screenOptions={{ headerShown: false }} />;
 };
