@@ -76,7 +76,7 @@ const PostDetails = () => {
         const notify = {
           senderId: user?.id,
           receiverId: postDetails?.userId,
-          title: "New Comment",
+          title: "commented on your post",
           data: JSON.stringify({
             postId: postDetails?.id,
             commentId: newComment?.id,
