@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { unsubscribeFromChannel } from "./postService";
 
 export const createNotification = async (notificationData) => {
   try {
@@ -38,4 +39,28 @@ export const fetchNotifications = async (receiverId) => {
     console.error("Error fetching notifications:", error);
     return { success: false, error };
   }
+};
+
+export const subscribeToNotifications = (userId, setNotificationCount) => {
+  const existingChannel = supabase
+    .getChannels()
+    .find((ch) => ch.topic === `realtime:notifications:${userId}`);
+  if (existingChannel) {
+    unsubscribeFromChannel(existingChannel);
+  }
+
+  const channel = supabase
+    .channel(`notifications:${userId}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "notifications" },
+      async (payload) => {
+        if (payload.eventType === "INSERT" && payload?.new?.id) {
+          setNotificationCount((prevCount) => prevCount + 1);
+        }
+      },
+    )
+    .subscribe();
+
+  return channel;
 };
