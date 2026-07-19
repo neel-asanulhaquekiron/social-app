@@ -59,6 +59,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     paddingHorizontal: wp(4),
+    paddingTop: 20,
   },
   scrollContainer: {
     paddingVertical: 20,
