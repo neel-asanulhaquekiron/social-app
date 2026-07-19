@@ -3,14 +3,9 @@ import { hp } from "@/helpers/common";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useState } from "react";
-import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { createPostLike, removePostLike } from "../../services/postService";
+import Avatar from "./Avatar";
 
 const PostCard = ({
   item,
@@ -21,104 +16,71 @@ const PostCard = ({
   onEdit,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
-
-  const isOwner = currentUser?.id === item?.userId;
+  const [likes, setLikes] = useState(item?.postLikes || []);
+  const liked = likes.some((like) => like.userId === currentUser?.id);
 
   const createdAt = moment(item?.created_at).format("MMM D");
 
-  const openPostDetails = () => {
-    router.push({ pathname: "postDetails", params: { postId: item?.id } });
+  const onLikePress = async () => {
+    try {
+      if (liked) {
+        // Unlike the post
+        const updatedLikes = likes.filter(
+          (like) => like.userId !== currentUser?.id,
+        );
+        setLikes(updatedLikes);
+        const { success, error } = await removePostLike(
+          item?.id,
+          currentUser?.id,
+        );
+        if (!success) {
+          console.error("Error un-liking post:", error);
+        }
+      } else {
+        const data = {
+          postId: item?.id,
+          userId: currentUser?.id,
+        };
+        setLikes([...likes, data]);
+        const { success, error } = await createPostLike(data);
+        if (!success) {
+          console.error("Error liking post:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Error liking/unliking post:", error);
+    }
   };
 
-  const handleDelete = () => {
-    setShowMenu(false);
-    Alert.alert("Confirm", "Are you sure you want to delete this post?", [
-      { text: "Cancel", style: "cancel", onPress: () => {} },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => onDelete?.(item),
-      },
-    ]);
-  };
-
-  const handleEdit = () => {
-    setShowMenu(false);
-    onEdit?.(item);
-  };
-
-  const liked = false; // Placeholder for like status, can be replaced with actual logic
-  let likes = []; // Placeholder for likes, can be replaced with actual logic
   return (
     <View style={[styles.container, hasShadow && styles.shadow]}>
       <View style={styles.header}>
         {/* user info and post time */}
-        <TouchableOpacity style={styles.userInfo} onPress={openPostDetails}>
-          <Ionicons
-            name="person-circle-outline"
-            size={hp(5)}
-            color={theme.colors.textLight}
-          />
+        <View style={styles.userInfo}>
+          <Avatar size={hp(5)} color={theme.colors.text} />
           <View style={styles.userDetails}>
             <Text style={styles.userName}>{item?.user?.name}</Text>
             <Text style={styles.postTime}>{createdAt}</Text>
           </View>
-        </TouchableOpacity>
-
-        {/* three dot menu */}
-        {isOwner && (
-          <View>
-            <Pressable onPress={() => setShowMenu((prev) => !prev)}>
-              <Ionicons
-                name="ellipsis-horizontal"
-                size={hp(2.8)}
-                color={theme.colors.textLight}
-              />
-            </Pressable>
-
-            {showMenu && (
-              <View style={styles.menu}>
-                <Pressable style={styles.menuItem} onPress={handleEdit}>
-                  <Ionicons
-                    name="pencil-outline"
-                    size={hp(2.2)}
-                    color={theme.colors.text}
-                  />
-                  <Text style={styles.menuText}>Edit</Text>
-                </Pressable>
-
-                <Pressable style={styles.menuItem} onPress={handleDelete}>
-                  <Ionicons
-                    name="trash-outline"
-                    size={hp(2.2)}
-                    color="#ff3333"
-                  />
-                  <Text style={[styles.menuText, { color: "#ff3333" }]}>
-                    Delete
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        )}
+        </View>
       </View>
 
       {/* post body */}
-      <View onPress={openPostDetails} style={styles.body}>
+      <View style={styles.body}>
         {item?.body && <Text style={styles.content}>{item.body}</Text>}
       </View>
 
       {/* footer actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => onLikePress()}>
             <Ionicons
-              name="heart-outline"
+              name={liked ? "heart" : "heart-outline"}
               size={hp(2.6)}
               color={liked ? theme.colors.rose : theme.colors.textLight}
             />
           </TouchableOpacity>
-          <Text style={styles.count}>{item?.likes?.length ?? 0}</Text>
+          <Text style={styles.count}>{likes.length ?? 0}</Text>
         </View>
 
         <View style={styles.footerButton}>
@@ -171,12 +133,12 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: hp(1.9),
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.bold,
     color: theme.colors.text,
   },
   postTime: {
     fontSize: hp(1.4),
-    color: theme.colors.textLight,
+    color: theme.colors.text,
   },
   menu: {
     position: "absolute",

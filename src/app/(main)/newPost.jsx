@@ -1,10 +1,10 @@
+import Avatar from "@/components/Avatar";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -59,11 +59,7 @@ const NewPost = () => {
         >
           {/* user info */}
           <View style={styles.userInfo}>
-            <Ionicons
-              name="person-circle-outline"
-              size={hp(6)}
-              color={theme.colors.textLight}
-            />
+            <Avatar size={hp(6)} color={theme.colors.text} />
             <View>
               <Text style={styles.username}>{user?.name}</Text>
               <Text style={styles.publicText}>Public</Text>

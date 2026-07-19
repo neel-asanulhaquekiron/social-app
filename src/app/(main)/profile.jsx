@@ -1,10 +1,10 @@
+import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { handleLogOut } from "@/utils/logOut";
-import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 
 const Profile = () => {
@@ -32,11 +32,7 @@ const UserHeader = ({ user, handleLogout }) => {
 
       <View style={styles.body}>
         <View style={styles.avatarContainer}>
-          <Ionicons
-            name="person-circle-outline"
-            size={hp(12)}
-            color={theme.colors.textLight}
-          />
+          <Avatar size={hp(12)} color={theme.colors.text} />
         </View>
 
         <View style={styles.info}>
