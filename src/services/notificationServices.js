@@ -1,43 +1,35 @@
+import { API_BASE_URL } from "@/constants";
 import { supabase } from "@/lib/supabase";
 import { unsubscribeFromChannel } from "./postService";
 
 export const createNotification = async (notificationData) => {
   try {
-    const { data, error } = await supabase
-      .from("notifications")
-      .insert(notificationData)
-      .select()
-      .single();
+    const res = await fetch(`${API_BASE_URL}/notifications/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(notificationData),
+    });
 
-    if (error) {
-      console.error("Error creating notification:", error);
-      return { success: false, error };
-    }
-
-    return { success: true, data };
+    const result = await res.json();
+    console.log("createNotificationViaAPI result:", result);
+    return result;
   } catch (error) {
-    console.error("Error creating notification:", error);
-    return { success: false, error };
+    console.error("Error creating notification via API:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
   }
 };
 
 export const fetchNotifications = async (receiverId) => {
   try {
-    const { data, error } = await supabase
-      .from("notifications")
-      .select("*, sender: senderId (id, name)")
-      .eq("receiverId", receiverId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Error fetching notifications:", error);
-      return { success: false, error };
-    }
-
-    return { success: true, data };
+    const res = await fetch(`${API_BASE_URL}/notifications/${receiverId}`);
+    const result = await res.json();
+    console.log("fetchNotificationsViaAPI result:", result);
+    return result;
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    return { success: false, error };
+    console.error("Error fetching notifications via API:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
   }
 };
 
