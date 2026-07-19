@@ -2,9 +2,10 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
+import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { signUpSchema } from "@/helpers/validationSchemas";
-import { supabase } from "@/lib/supabase";
+import { signup } from "@/services/authService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -15,6 +16,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 const SignUp = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { setAuth } = useAuth();
 
   const {
     control,
@@ -25,22 +27,39 @@ const SignUp = () => {
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
+  // const onSubmit = async ({ name, email, password }) => {
+  //   setLoading(true);
+  //   try {
+  //     const { error } = await supabase.auth.signUp({
+  //       email: email.trim(),
+  //       password,
+  //       options: { data: { name: name.trim(), email: email.trim() } },
+  //     });
+
+  //     if (error) {
+  //       Alert.alert("Sign Up Failed", error.message);
+  //     }
+  //   } catch (error) {
+  //     Alert.alert("Sign Up Failed", error?.message || "Something went wrong");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const onSubmit = async ({ name, email, password }) => {
     setLoading(true);
-    try {
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: { data: { name: name.trim(), email: email.trim() } },
-      });
+    const result = await signup({
+      email: email.trim(),
+      password: password.trim(),
+      options: { data: { name: name.trim(), email: email.trim() } },
+    });
+    setLoading(false);
 
-      if (error) {
-        Alert.alert("Sign Up Failed", error.message);
-      }
-    } catch (error) {
-      Alert.alert("Sign Up Failed", error?.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+    if (result.success) {
+      setAuth(result.user);
+      router.replace("/home");
+    } else {
+      Alert.alert("Sign Up Failed", result.msg || "Something went wrong");
     }
   };
 
