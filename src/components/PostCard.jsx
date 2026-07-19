@@ -4,8 +4,11 @@ import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { createNotification } from "../../services/notificationServices";
 import { createPostLike, removePostLike } from "../../services/postService";
 import Avatar from "./Avatar";
+
+const MAX_LINES = 6;
 
 const PostCard = ({
   item,
@@ -16,16 +19,16 @@ const PostCard = ({
   onEdit,
   disableDetailsNavigation = false,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
   const [likes, setLikes] = useState(item?.postLikes || []);
   const liked = likes.some((like) => like.userId === currentUser?.id);
+  const [expanded, setExpanded] = useState(false);
+  const [showSeeMore, setShowSeeMore] = useState(false);
 
   const createdAt = moment(item?.created_at).format("MMM D");
 
   const onLikePress = async () => {
     try {
       if (liked) {
-        // Unlike the post
         const updatedLikes = likes.filter(
           (like) => like.userId !== currentUser?.id,
         );
@@ -44,7 +47,17 @@ const PostCard = ({
         };
         setLikes([...likes, data]);
         const { success, error } = await createPostLike(data);
-        if (!success) {
+        if (success) {
+          if (currentUser?.id !== item?.userId) {
+            const notify = {
+              senderId: currentUser?.id,
+              receiverId: item?.userId,
+              title: "liked your post",
+              data: JSON.stringify({ postId: item?.id }),
+            };
+            await createNotification(notify);
+          }
+        } else {
           console.error("Error liking post:", error);
         }
       }
@@ -56,6 +69,16 @@ const PostCard = ({
   const openPostDetails = () => {
     if (!disableDetailsNavigation) {
       router.push({ pathname: "postDetails", params: { postId: item?.id } });
+    }
+  };
+
+  const toggleExpanded = () => {
+    setExpanded((prev) => !prev);
+  };
+
+  const onTextLayout = (e) => {
+    if (!expanded) {
+      setShowSeeMore(e.nativeEvent.lines.length > MAX_LINES);
     }
   };
 
@@ -74,7 +97,34 @@ const PostCard = ({
 
       {/* post body */}
       <View style={styles.body}>
-        {item?.body && <Text style={styles.content}>{item.body}</Text>}
+        {item?.body && (
+          <>
+            <Text
+              style={styles.content}
+              numberOfLines={expanded ? undefined : MAX_LINES}
+            >
+              {item.body}
+            </Text>
+
+            {/* Hidden, unclamped clone — used only to measure true line count */}
+            {!expanded && (
+              <Text
+                style={[styles.content, styles.hiddenMeasure]}
+                onTextLayout={onTextLayout}
+              >
+                {item.body}
+              </Text>
+            )}
+
+            {showSeeMore && (
+              <TouchableOpacity onPress={toggleExpanded}>
+                <Text style={styles.seeMoreText}>
+                  {expanded ? "See less" : "See more"}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
       </View>
 
       {/* footer actions */}
@@ -205,5 +255,10 @@ const styles = StyleSheet.create({
   count: {
     fontSize: hp(1.6),
     color: theme.colors.textLight,
+  },
+  hiddenMeasure: {
+    position: "absolute",
+    opacity: 0,
+    zIndex: -1,
   },
 });
