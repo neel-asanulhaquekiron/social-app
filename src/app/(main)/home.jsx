@@ -18,8 +18,9 @@ import {
 } from "react-native";
 import {
   fetchPosts,
+  subscribeToAllComments,
   subscribeToPosts,
-  unsubscribeFromPosts,
+  unsubscribeFromChannel,
 } from "../../../services/postService";
 
 var limit = 0;
@@ -52,16 +53,18 @@ const Home = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    limit = 6; // Reset limit to initial value on refresh
+    limit = 0; // Reset limit to initial value on refresh
     await getPosts();
     setRefreshing(false);
   };
 
   useEffect(() => {
     const postChannel = subscribeToPosts(setPosts);
+    const commentChannel = subscribeToAllComments(setPosts);
 
     return () => {
-      unsubscribeFromPosts(postChannel);
+      unsubscribeFromChannel(postChannel);
+      unsubscribeFromChannel(commentChannel);
     };
   }, []);
 
