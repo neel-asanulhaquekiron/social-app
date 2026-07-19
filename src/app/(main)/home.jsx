@@ -52,7 +52,7 @@ const Home = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    limit = 6; // Reset limit to initial value on refresh
+    limit = 0; // Reset limit to initial value on refresh
     await getPosts();
     setRefreshing(false);
   };
