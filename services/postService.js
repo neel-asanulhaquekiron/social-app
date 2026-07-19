@@ -226,11 +226,15 @@ export const subscribeToAllComments = (setPosts) => {
       (payload) => {
         const postId = payload?.new?.postId ?? payload?.old?.postId;
 
-        if (!postId) return;
+        if (!postId) {
+          return;
+        }
 
         setPosts((prevPosts) =>
           prevPosts.map((post) => {
-            if (post.id !== postId) return post;
+            if (post.id !== postId) {
+              return post;
+            }
 
             const currentCount = post?.comments?.[0]?.count ?? 0;
             const delta =
