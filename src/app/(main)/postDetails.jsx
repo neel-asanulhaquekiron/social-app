@@ -11,19 +11,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+import { createNotification } from "../../../services/notificationServices";
 import {
-    createComment,
-    deleteComment,
-    fetchPostById,
-    subscribeToComments,
-    unsubscribeFromChannel,
+  createComment,
+  deleteComment,
+  fetchPostById,
+  subscribeToComments,
+  unsubscribeFromChannel,
 } from "../../../services/postService";
 
 const PostDetails = () => {
@@ -71,6 +72,18 @@ const PostDetails = () => {
     setSendingComment(false);
 
     if (success) {
+      if (user?.id !== postDetails?.userId) {
+        const notify = {
+          senderId: user?.id,
+          receiverId: postDetails?.userId,
+          title: "New Comment",
+          data: JSON.stringify({
+            postId: postDetails?.id,
+            commentId: newComment?.id,
+          }),
+        };
+        await createNotification(notify);
+      }
       inputRef?.current?.clear();
       commentRef.current = "";
     } else {
