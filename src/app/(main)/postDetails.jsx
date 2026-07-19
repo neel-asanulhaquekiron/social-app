@@ -7,6 +7,14 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
+import { createNotification } from "@/services/notificationServices";
+import {
+  createComment,
+  deleteComment,
+  fetchPostById,
+  subscribeToComments,
+  unsubscribeFromChannel,
+} from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -18,14 +26,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { createNotification } from "../../../services/notificationServices";
-import {
-  createComment,
-  deleteComment,
-  fetchPostById,
-  subscribeToComments,
-  unsubscribeFromChannel,
-} from "../../../services/postService";
 
 const PostDetails = () => {
   const { postId, commentId } = useLocalSearchParams();

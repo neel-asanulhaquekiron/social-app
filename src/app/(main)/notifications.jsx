@@ -3,10 +3,10 @@ import NotificationItem from "@/components/NotificationItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
 import { wp } from "@/helpers/common";
+import { fetchNotifications } from "@/services/notificationServices";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { fetchNotifications } from "../../../services/notificationServices";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
