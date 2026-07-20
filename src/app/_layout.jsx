@@ -6,7 +6,7 @@ import {
 } from "@/services/authService";
 import { getUserData } from "@/services/userService";
 import { Stack, useFocusEffect, usePathname, useRouter } from "expo-router";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Alert, BackHandler } from "react-native";
 
 const _layout = () => {
@@ -21,6 +21,7 @@ const MainLayout = () => {
   const { setAuth, setUserData } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
 
   const updateUserData = async (user) => {
     const res = await getUserData(user?.id);
@@ -32,14 +33,14 @@ const MainLayout = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        if (pathname !== "/home") {
+        if (pathnameRef.current !== "/home") {
           return false;
         }
+
         Alert.alert("Exit App", "Are you sure you want to exit?", [
           { text: "Cancel", style: "cancel" },
           { text: "Exit", onPress: () => BackHandler.exitApp() },
         ]);
-
         return true;
       };
 
@@ -51,6 +52,10 @@ const MainLayout = () => {
       return () => subscription.remove();
     }, []),
   );
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     const checkAuth = async () => {
