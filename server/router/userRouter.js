@@ -7,3 +7,5 @@ router.get("/:userId", async (req, res) => {
   const result = await User.getUserData(userId);
   res.json(result);
 });
+
+module.exports = router;
