@@ -27,7 +27,7 @@ const UserHeader = ({ user, handleLogout }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Header
-          title="Profile"
+          title="My Profile"
           showBackButton={true}
           showLogOutButton={true}
           onLogOut={handleLogout}
