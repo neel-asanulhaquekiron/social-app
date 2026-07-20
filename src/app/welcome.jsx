@@ -21,7 +21,7 @@ const Welcome = () => {
         {/* footer */}
         <View style={styles.footer}>
           <Button
-            title="Get Started"
+            title="Sign Up"
             buttonStyle={{
               marginHorizontal: wp(3),
             }}

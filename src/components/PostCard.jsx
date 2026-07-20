@@ -1,11 +1,11 @@
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { createNotification } from "@/services/notificationServices";
+import { createPostLike, removePostLike } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { createNotification } from "../../services/notificationServices";
-import { createPostLike, removePostLike } from "../../services/postService";
 import Avatar from "./Avatar";
 
 const MAX_LINES = 6;
@@ -33,10 +33,7 @@ const PostCard = ({
           (like) => like.userId !== currentUser?.id,
         );
         setLikes(updatedLikes);
-        const { success, error } = await removePostLike(
-          item?.id,
-          currentUser?.id,
-        );
+        const { success, error } = await removePostLike(item?.id);
         if (!success) {
           console.error("Error un-liking post:", error);
         }
@@ -46,7 +43,7 @@ const PostCard = ({
           userId: currentUser?.id,
         };
         setLikes([...likes, data]);
-        const { success, error } = await createPostLike(data);
+        const { success, error } = await createPostLike(item?.id);
         if (success) {
           if (currentUser?.id !== item?.userId) {
             const notify = {

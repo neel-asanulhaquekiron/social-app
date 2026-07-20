@@ -5,6 +5,7 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
+import { createOrUpdatePost } from "@/services/postService";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -15,7 +16,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { createOrUpdatePost } from "../../../services/postService";
 
 const NewPost = () => {
   const { user } = useAuth();
@@ -31,14 +31,8 @@ const NewPost = () => {
       return;
     }
 
-    const data = {
-      body,
-      userId: user?.id,
-    };
-
     setLoading(true);
-    const res = await createOrUpdatePost(data);
-    console.log("🚀 ~ onSubmit ~ res:", res);
+    const res = await createOrUpdatePost({ body });
     setLoading(false);
 
     if (res.success) {
