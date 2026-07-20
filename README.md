@@ -322,18 +322,14 @@ eas build --profile production --platform android
 
 ---
 
-<!-- ## 🧪 Testing
+## 🧪 Testing
 
 ```bash
-# Backend tests
-cd server
-npm test
-
-# Mobile tests
-npm test
+emails : asanul@gmail.com, haque@gmail.com, kiron@gmail.com
+password (for all): 123456
 ```
 
---- -->
+---
 
 ## 🛠️ Tech Stack
 
