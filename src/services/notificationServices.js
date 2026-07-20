@@ -4,12 +4,17 @@ import { unsubscribeFromChannel } from "./postService";
 
 export const createNotification = async (notificationData) => {
   try {
+    const updatedNotificationData = {
+      ...notificationData,
+      isSeen: false,
+      isClicked: false,
+    };
     const res = await fetch(`${API_BASE_URL}/notifications/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(notificationData),
+      body: JSON.stringify(updatedNotificationData),
     });
 
     const result = await res.json();
@@ -17,6 +22,25 @@ export const createNotification = async (notificationData) => {
     return result;
   } catch (error) {
     console.error("Error creating notification via API:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
+  }
+};
+
+export const markNotificationAsClicked = async (notificationId) => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isClicked: true }),
+    });
+
+    const result = await res.json();
+    console.log("markNotificationAsClickedViaAPI result:", result);
+    return result;
+  } catch (error) {
+    console.error("Error marking notification as clicked via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
   }
 };

@@ -21,6 +21,27 @@ class Notification {
     }
   }
 
+  static async markNotificationAsClicked(notificationId) {
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .update({ isClicked: true })
+        .eq("id", notificationId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error marking notification as clicked:", error);
+        return { success: false, msg: error.message };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error marking notification as clicked:", error);
+      return { success: false, msg: error.message || "Something went wrong" };
+    }
+  }
+
   static async fetchNotifications(receiverId) {
     try {
       const { data, error } = await supabase

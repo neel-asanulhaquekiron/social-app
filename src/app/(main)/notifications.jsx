@@ -43,6 +43,7 @@ const Notifications = () => {
                 item={notification}
                 key={notification?.id}
                 router={router}
+                setNotifications={setNotifications}
               />
             );
           })}
