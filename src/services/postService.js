@@ -21,9 +21,13 @@ export const createOrUpdatePost = async (postData) => {
   }
 };
 
-export const fetchPosts = async (limit = 10) => {
+export const fetchPosts = async (limit = 10, userName = null) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/posts/?limit=${limit}`);
+    const params = new URLSearchParams({ limit });
+    if (userName) {
+      params.append("username", userName);
+    }
+    const res = await fetch(`${API_BASE_URL}/posts/?${params.toString()}`);
     const result = await res.json();
     return result;
   } catch (error) {

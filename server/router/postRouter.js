@@ -10,7 +10,8 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
-  const result = await Post.fetchPosts(limit);
+  const userName = req.query.username || null;
+  const result = await Post.fetchPosts(limit, userName);
   res.json(result);
 });
 
