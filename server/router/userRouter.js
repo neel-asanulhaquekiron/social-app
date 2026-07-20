@@ -17,6 +17,7 @@ router.get(
 
 router.post("/registerPushToken", async (req, res) => {
   const { userId, pushToken } = req.body;
+  console.log("🚀 ~ pushToken:", pushToken);
   const result = await User.registerPushToken(userId, pushToken);
   res.json(result);
 });
