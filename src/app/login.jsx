@@ -5,7 +5,7 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { loginSchema } from "@/helpers/validationSchemas";
-import { login } from "@/services/authService";
+import { login, registerPushToken } from "@/services/authService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -29,24 +29,6 @@ const Login = () => {
     reValidateMode: "onChange",
   });
 
-  // const onSubmit = async ({ email, password }) => {
-  //   setLoading(true);
-  //   try {
-  //     const { error } = await supabase.auth.signInWithPassword({
-  //       email: email.trim(),
-  //       password: password.trim(),
-  //     });
-
-  //     if (error) {
-  //       Alert.alert("Login Failed", error.message);
-  //     }
-  //   } catch (error) {
-  //     Alert.alert("Login Failed", error?.message || "Something went wrong");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const onSubmit = async ({ email, password }) => {
     setLoading(true);
     const result = await login({
@@ -57,6 +39,7 @@ const Login = () => {
 
     if (result.success) {
       setAuth(result.user);
+      registerPushToken(result.user.id);
       router.replace("/home");
     } else {
       Alert.alert("Login Failed", result.msg || "Something went wrong");

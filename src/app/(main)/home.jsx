@@ -63,15 +63,23 @@ const Home = () => {
     );
 
     if (success) {
+      if (data.length === 0) {
+        setHasMorePosts(false);
+        if (isNewSearch) {
+          setPosts([]);
+        }
+        return;
+      }
+      // FIX: If no new posts were added (same length as before), stop
       if (!isNewSearch && posts.length > 0 && data.length === posts.length) {
         setHasMorePosts(false);
-      }
-      if (isNewSearch) {
-        setHasMorePosts(true);
+      } else {
+        setHasMorePosts(true); // Still has more if we got new data
       }
       setPosts(data);
     } else {
       console.error("Error fetching posts:", msg);
+      setHasMorePosts(false); // Stop loading on error too
     }
   };
 
@@ -152,8 +160,10 @@ const Home = () => {
           onEndReached={() => getPosts()}
           onEndReachedThreshold={0.3}
           ListFooterComponent={
-            hasMorePosts ? (
-              <View style={{ marginVertical: posts.length === 0 ? 200 : 30 }}>
+            posts.length === 0 ? (
+              <Text style={styles.emptyText}>No posts found</Text>
+            ) : hasMorePosts ? (
+              <View style={{ marginVertical: 30 }}>
                 <Loading />
               </View>
             ) : (
