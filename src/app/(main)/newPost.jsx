@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: wp(4),
+    paddingTop: hp(1),
   },
 
   userInfo: {

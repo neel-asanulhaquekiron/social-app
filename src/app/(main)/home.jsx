@@ -1,4 +1,5 @@
 import Avatar from "@/components/Avatar";
+import Input from "@/components/Input";
 import Loading from "@/components/Loading";
 import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -33,6 +34,19 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [showFilter, setShowFilter] = useState(false);
+  const [usernameFilter, setUsernameFilter] = useState("");
+
+  const filteredPosts = useMemo(() => {
+    const query = usernameFilter.trim().toLowerCase();
+    if (!query) {
+      return posts;
+    }
+
+    return posts.filter((post) =>
+      post?.user?.name?.toLowerCase().includes(query),
+    );
+  }, [posts, usernameFilter]);
 
   const getPosts = async () => {
     if (!hasMorePosts) {
@@ -82,11 +96,36 @@ const Home = () => {
         <HomeHeader
           notificationCount={notificationCount}
           setNotificationCount={setNotificationCount}
+          showFilter={showFilter}
+          setShowFilter={setShowFilter}
+          setUsernameFilter={setUsernameFilter}
         />
+
+        {showFilter && (
+          <View style={styles.filterContainer}>
+            <Input
+              placeholder="Filter by username"
+              placeholderTextColor={theme.colors.textLight}
+              style={styles.filterInput}
+              value={usernameFilter}
+              onChangeText={setUsernameFilter}
+              autoCapitalize="none"
+            />
+            {usernameFilter.length > 0 && (
+              <Pressable
+                onPress={() => setUsernameFilter("")}
+                style={styles.clearButton}
+                hitSlop={10}
+              >
+                <Text style={styles.clearButtonText}>Clear</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
 
         {/* posts */}
         <FlatList
-          data={posts}
+          data={filteredPosts}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listStyle}
           showsVerticalScrollIndicator={false}
@@ -115,13 +154,41 @@ const Home = () => {
 
 export default Home;
 
-const HomeHeader = ({ notificationCount, setNotificationCount }) => {
+const HomeHeader = ({
+  notificationCount,
+  setNotificationCount,
+  showFilter,
+  setShowFilter,
+  setUsernameFilter,
+}) => {
   const router = useRouter();
+
+  const toggleFilter = () => {
+    setShowFilter((prev) => {
+      const next = !prev;
+      if (!next) {
+        setUsernameFilter("");
+      }
+      return next;
+    });
+  };
 
   return (
     <View style={styles.header}>
       <Text style={styles.title}>Social App</Text>
       <View style={styles.icons}>
+        <Pressable onPress={toggleFilter}>
+          <Ionicons
+            name={showFilter ? "filter" : "filter-outline"}
+            size={hp(3.2)}
+            color={
+              showFilter
+                ? (theme.colors.primaryDark ?? theme.colors.text)
+                : theme.colors.text
+            }
+          />
+        </Pressable>
+
         <Pressable
           onPress={() => {
             setNotificationCount(0);
@@ -225,6 +292,34 @@ const styles = StyleSheet.create({
   notificationBadgeText: {
     color: "white",
     fontSize: hp(1.2),
+    fontWeight: theme.fonts.bold,
+  },
+  filterContainer: {
+    position: "relative",
+    width: "100%",
+    height: hp(5.8),
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  filterInput: {
+    width: "100%",
+    height: "100%",
+    fontSize: hp(1.8),
+    color: theme.colors.text,
+    paddingLeft: 0,
+    paddingRight: hp(4.5),
+    borderWidth: 0,
+    backgroundColor: "transparent",
+  },
+  clearButton: {
+    position: "absolute",
+    right: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  clearButtonText: {
+    color: theme.colors?.rose ?? "red",
+    fontSize: hp(1.8),
     fontWeight: theme.fonts.bold,
   },
 });
