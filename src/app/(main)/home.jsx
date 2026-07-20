@@ -15,7 +15,7 @@ import {
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -24,8 +24,6 @@ import {
   Text,
   View,
 } from "react-native";
-
-var limit = 0;
 
 const Home = () => {
   const { user } = useAuth();
@@ -36,30 +34,26 @@ const Home = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [showFilter, setShowFilter] = useState(false);
   const [usernameFilter, setUsernameFilter] = useState("");
+  const limitRef = useRef(0);
 
-  const filteredPosts = useMemo(() => {
-    const query = usernameFilter.trim().toLowerCase();
-    if (!query) {
-      return posts;
-    }
-
-    return posts.filter((post) =>
-      post?.user?.name?.toLowerCase().includes(query),
-    );
-  }, [posts, usernameFilter]);
-
-  const getPosts = async () => {
-    if (!hasMorePosts) {
+  const getPosts = async ({ isNewSearch = false } = {}) => {
+    if (!hasMorePosts && !isNewSearch) {
       return;
     }
 
-    limit = limit + 6;
-    console.log("Fetching posts with limit:", limit);
-    const { success, data, msg } = await fetchPosts(limit);
+    limitRef.current = isNewSearch ? 6 : limitRef.current + 6;
+
+    const { success, data, msg } = await fetchPosts(
+      limitRef.current,
+      usernameFilter.trim() || undefined,
+    );
 
     if (success) {
-      if (posts.length > 0 && data.length === posts.length) {
+      if (!isNewSearch && posts.length > 0 && data.length === posts.length) {
         setHasMorePosts(false);
+      }
+      if (isNewSearch) {
+        setHasMorePosts(true);
       }
       setPosts(data);
     } else {
@@ -69,10 +63,17 @@ const Home = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    limit = 0; // Reset limit to initial value on refresh
-    await getPosts();
+    await getPosts({ isNewSearch: true });
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      getPosts({ isNewSearch: true });
+    }, 400); // debounce: wait for user to stop typing
+
+    return () => clearTimeout(timeout);
+  }, [usernameFilter]);
 
   useEffect(() => {
     const postChannel = subscribeToPosts(setPosts);
@@ -125,7 +126,7 @@ const Home = () => {
 
         {/* posts */}
         <FlatList
-          data={filteredPosts}
+          data={posts}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listStyle}
           showsVerticalScrollIndicator={false}
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: hp(5.8),
     justifyContent: "center",
-    marginBottom: 10,
+    marginVertical: 5,
   },
   filterInput: {
     width: "100%",

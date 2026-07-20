@@ -21,13 +21,21 @@ class Post {
     }
   }
 
-  static async fetchPosts(limit = 10) {
+  static async fetchPosts(limit = 10, userName = null) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("posts")
-        .select("*, user: users (id, name), postLikes (*), comments (count)")
+        .select(
+          "*, user: users!inner (id, name), postLikes (*), comments (count)",
+        )
         .order("created_at", { ascending: false })
         .limit(limit);
+
+      if (userName) {
+        query = query.ilike("user.name", `%${userName}%`);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching posts:", error);
