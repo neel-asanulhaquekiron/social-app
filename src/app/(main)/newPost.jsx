@@ -31,13 +31,8 @@ const NewPost = () => {
       return;
     }
 
-    const data = {
-      body,
-      userId: user?.id,
-    };
-
     setLoading(true);
-    const res = await createOrUpdatePost(data);
+    const res = await createOrUpdatePost({ body });
     setLoading(false);
 
     if (res.success) {
