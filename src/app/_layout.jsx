@@ -1,5 +1,9 @@
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { getStoredUser, getToken } from "@/services/authService";
+import {
+  getStoredUser,
+  getToken,
+  registerPushToken,
+} from "@/services/authService";
 import { getUserData } from "@/services/userService";
 import { Stack, useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect } from "react";
@@ -51,6 +55,7 @@ const MainLayout = () => {
 
       if (token && user) {
         setAuth(user);
+        registerPushToken(user.id);
         router.replace("/home");
       } else {
         setAuth(null);
