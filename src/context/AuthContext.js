@@ -5,12 +5,12 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  const setAuth = (authData) => {
-    setUser(authData);
+  const setAuth = (authUser) => {
+    setUser(authUser);
   };
 
   const setUserData = (userData) => {
-    setUser({ ...userData });
+    setUser((prevUser) => ({ ...prevUser, ...userData }));
   };
 
   return (

@@ -1,40 +1,34 @@
+import { API_BASE_URL } from "@/constants";
 import { supabase } from "@/lib/supabase";
+import { authFetch } from "./apiClient";
 import { getUserData } from "./userService";
 
-export const createOrUpdatePost = async (post) => {
+export const createOrUpdatePost = async (postData) => {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .upsert(post)
-      .select()
-      .single();
+    const res = await authFetch(`${API_BASE_URL}/posts`, {
+      method: "POST",
+      body: JSON.stringify(postData),
+    });
 
-    if (error) {
-      console.error("Error creating/updating post:", error);
-      return { success: false, msg: error.message };
-    }
-
-    return { success: true, data };
+    return await res.json();
   } catch (error) {
-    console.error("Error creating/updating post:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
+    console.error("Error creating/updating post via API:", error);
+    return {
+      success: false,
+      msg: error.message || "Something went wrong",
+    };
   }
 };
 
-export const fetchPosts = async (limit = 10) => {
+export const fetchPosts = async (limit = 10, userName = null) => {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*, user: users (id, name), postLikes (*), comments (count)")
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error("Error fetching posts:", error);
-      return { success: false, msg: error.message };
+    const params = new URLSearchParams({ limit });
+    if (userName) {
+      params.append("username", userName);
     }
-
-    return { success: true, data };
+    const res = await fetch(`${API_BASE_URL}/posts/?${params.toString()}`);
+    const result = await res.json();
+    return result;
   } catch (error) {
     console.error("Error fetching posts:", error);
     return { success: false, msg: error.message || "Something went wrong" };
@@ -43,63 +37,74 @@ export const fetchPosts = async (limit = 10) => {
 
 export const fetchPostById = async (postId) => {
   try {
-    const { data, error } = await supabase
-      .from("posts")
-      .select(
-        "*, user: users (id, name), postLikes (*), comments (* , user: users(id, name))",
-      )
-      .eq("id", postId)
-      .order("created_at", { ascending: false, foreignTable: "comments" })
-      .single();
-
-    if (error) {
-      console.error("Error fetching post by ID:", error);
-      return { success: false, msg: error.message };
-    }
-
-    return { success: true, data };
+    const res = await fetch(`${API_BASE_URL}/posts/${postId}`);
+    const result = await res.json();
+    return result;
   } catch (error) {
-    console.error("Error fetching post by ID:", error);
+    console.error("Error fetching post by ID via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
   }
 };
 
-export const createPostLike = async (postLike) => {
+export const createPostLike = async (postId) => {
   try {
-    const { data, error } = await supabase
-      .from("postLikes")
-      .insert(postLike)
-      .select()
-      .single();
+    const res = await authFetch(`${API_BASE_URL}/posts/${postId}/like`, {
+      method: "POST",
+    });
 
-    if (error) {
-      console.error("Error creating post like:", error);
-      return { success: false, msg: error.message };
-    }
-
-    return { success: true, data };
+    return await res.json();
   } catch (error) {
-    console.error("Error creating post like:", error);
+    console.error("Error creating post like via API:", error);
+    return {
+      success: false,
+      msg: error.message || "Something went wrong",
+    };
+  }
+};
+
+export const removePostLike = async (postId) => {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/posts/${postId}/like`, {
+      method: "DELETE",
+    });
+
+    return await res.json();
+  } catch (error) {
+    console.error("Error removing post like via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
   }
 };
 
-export const removePostLike = async (postId, userId) => {
+export const createComment = async (comment) => {
   try {
-    const { error } = await supabase
-      .from("postLikes")
-      .delete()
-      .eq("postId", postId)
-      .eq("userId", userId);
+    const res = await authFetch(
+      `${API_BASE_URL}/posts/${comment.postId}/comment`,
+      {
+        method: "POST",
+        body: JSON.stringify(comment),
+      },
+    );
 
-    if (error) {
-      console.error("Error removing post like:", error);
-      return { success: false, msg: error.message };
-    }
-
-    return { success: true };
+    return await res.json();
   } catch (error) {
-    console.error("Error removing post like:", error);
+    console.error("Error creating comment via API:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
+  }
+};
+
+export const deleteComment = async (commentId) => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/posts/comment/${commentId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = await res.json();
+    return result;
+  } catch (error) {
+    console.error("Error deleting comment via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
   }
 };
@@ -113,45 +118,6 @@ const getPostsChannelHandler = (setPosts) => {
       setPosts((prevPosts) => [newPost, ...prevPosts]);
     }
   };
-};
-
-export const createComment = async (comment) => {
-  try {
-    const { data, error } = await supabase
-      .from("comments")
-      .insert(comment)
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Error creating comment:", error);
-      return { success: false, msg: error.message };
-    }
-
-    return { success: true, data };
-  } catch (error) {
-    console.error("Error creating comment:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
-
-export const deleteComment = async (commentId) => {
-  try {
-    const { error } = await supabase
-      .from("comments")
-      .delete()
-      .eq("id", commentId);
-
-    if (error) {
-      console.error("Error deleting comment:", error);
-      return { success: false, msg: error.message };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
 };
 
 export const subscribeToPosts = (setPosts) => {
@@ -172,12 +138,6 @@ export const subscribeToPosts = (setPosts) => {
     .subscribe();
 
   return channel;
-};
-
-export const unsubscribeFromChannel = (channel) => {
-  if (channel) {
-    supabase.removeChannel(channel);
-  }
 };
 
 export const subscribeToComments = (postId, setPostDetails) => {
@@ -260,4 +220,10 @@ export const subscribeToAllComments = (setPosts) => {
     .subscribe();
 
   return channel;
+};
+
+export const unsubscribeFromChannel = (channel) => {
+  if (channel) {
+    supabase.removeChannel(channel);
+  }
 };

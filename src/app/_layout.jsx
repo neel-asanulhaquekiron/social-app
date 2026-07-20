@@ -1,8 +1,9 @@
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { Stack, useRouter } from "expo-router";
-import { useEffect } from "react";
-import { getUserData } from "../../services/userService";
+import { getStoredUser, getToken } from "@/services/authService";
+import { getUserData } from "@/services/userService";
+import { Stack, useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect } from "react";
+import { Alert, BackHandler } from "react-native";
 
 const _layout = () => {
   return (
@@ -23,17 +24,41 @@ const MainLayout = () => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        Alert.alert("Exit App", "Are you sure you want to exit?", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Exit", onPress: () => BackHandler.exitApp() },
+        ]);
+
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, []),
+  );
+
   useEffect(() => {
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setAuth(session.user);
-        updateUserData(session.user);
+    const checkAuth = async () => {
+      const token = await getToken();
+      const user = await getStoredUser();
+
+      if (token && user) {
+        setAuth(user);
         router.replace("/home");
       } else {
         setAuth(null);
-        router.push("/welcome");
+        router.replace("/welcome");
       }
-    });
+    };
+
+    checkAuth();
   }, []);
   return <Stack screenOptions={{ headerShown: false }} />;
 };

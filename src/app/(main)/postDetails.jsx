@@ -7,6 +7,14 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
+import { createNotification } from "@/services/notificationServices";
+import {
+  createComment,
+  deleteComment,
+  fetchPostById,
+  subscribeToComments,
+  unsubscribeFromChannel,
+} from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -18,14 +26,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { createNotification } from "../../../services/notificationServices";
-import {
-  createComment,
-  deleteComment,
-  fetchPostById,
-  subscribeToComments,
-  unsubscribeFromChannel,
-} from "../../../services/postService";
 
 const PostDetails = () => {
   const { postId, commentId } = useLocalSearchParams();
@@ -63,7 +63,6 @@ const PostDetails = () => {
 
     const data = {
       postId: postDetails?.id,
-      userId: user?.id,
       text,
     };
 
@@ -119,83 +118,81 @@ const PostDetails = () => {
     );
   }
 
-  if (!postDetails) {
-    return (
-      <View style={styles.loadingContainer}>
-        <Text>Post not found</Text>
-      </View>
-    );
-  }
-
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
         <Header title="Post Details" showBackButton={true} />
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContainer}
-        >
-          <PostCard
-            item={{
-              ...postDetails,
-              comments: [{ count: postDetails?.comments?.length }],
-            }}
-            currentUser={user}
-            router={router}
-            hasShadow={false}
-            disableDetailsNavigation={true}
-          />
-
-          {/* comment input */}
-          <View style={styles.inputContainer}>
-            <Input
-              ref={inputRef}
-              placeholder="Write a comment..."
-              onChangeText={(value) => (commentRef.current = value)}
-              containerStyle={styles.commentInput}
+        {!postDetails && (
+          <View style={styles.loadingContainer}>
+            <Text>Post not found</Text>
+          </View>
+        )}
+        {postDetails && (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContainer}
+          >
+            <PostCard
+              item={{
+                ...postDetails,
+                comments: [{ count: postDetails?.comments?.length }],
+              }}
+              currentUser={user}
+              router={router}
+              hasShadow={false}
+              disableDetailsNavigation={true}
             />
 
-            {sendingComment ? (
-              <View style={styles.sendIcon}>
-                <Loading size="small" />
-              </View>
-            ) : (
-              <Pressable style={styles.sendIcon} onPress={onNewComment}>
-                <Ionicons
-                  name="send"
-                  size={hp(2.4)}
-                  color={theme.colors.primaryDark ?? theme.colors.text}
-                />
-              </Pressable>
-            )}
-          </View>
+            {/* comment input */}
+            <View style={styles.inputContainer}>
+              <Input
+                ref={inputRef}
+                placeholder="Write a comment..."
+                onChangeText={(value) => (commentRef.current = value)}
+                containerStyle={styles.commentInput}
+              />
 
-          {/* comment list */}
-          <View style={{ gap: 20, marginVertical: 15 }}>
-            {postDetails?.comments?.length > 0 &&
-              postDetails?.comments?.map((comment) => (
-                <CommentItem
-                  item={comment}
-                  key={comment?.id?.toString()}
-                  //   canDelete={
-                  //     comment?.userId === user?.id ||
-                  //     postDetails?.userId === user?.id
-                  //   }
-                  //   onDelete={onDeleteComment}
-                  highlight={comment?.id == commentId}
-                />
-              ))}
+              {sendingComment ? (
+                <View style={styles.sendIcon}>
+                  <Loading size="small" />
+                </View>
+              ) : (
+                <Pressable style={styles.sendIcon} onPress={onNewComment}>
+                  <Ionicons
+                    name="send"
+                    size={hp(2.4)}
+                    color={theme.colors.primaryDark ?? theme.colors.text}
+                  />
+                </Pressable>
+              )}
+            </View>
 
-            {postDetails?.comments?.length === 0 && (
-              <Text
-                style={{ textAlign: "center", color: theme.colors.textLight }}
-              >
-                Be the first to comment on this post!
-              </Text>
-            )}
-          </View>
-        </ScrollView>
+            {/* comment list */}
+            <View style={{ gap: 20, marginVertical: 15 }}>
+              {postDetails?.comments?.length > 0 &&
+                postDetails?.comments?.map((comment) => (
+                  <CommentItem
+                    item={comment}
+                    key={comment?.id?.toString()}
+                    //   canDelete={
+                    //     comment?.userId === user?.id ||
+                    //     postDetails?.userId === user?.id
+                    //   }
+                    //   onDelete={onDeleteComment}
+                    highlight={comment?.id == commentId}
+                  />
+                ))}
+
+              {postDetails?.comments?.length === 0 && (
+                <Text
+                  style={{ textAlign: "center", color: theme.colors.textLight }}
+                >
+                  Be the first to comment on this post!
+                </Text>
+              )}
+            </View>
+          </ScrollView>
+        )}
       </View>
     </ScreenWrapper>
   );
