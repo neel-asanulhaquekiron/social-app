@@ -32,26 +32,12 @@ router.post(
   postController.createPostLike,
 );
 
-router.delete("/:postId/like", async (req, res) => {
-  const { postId } = req.params;
-  const { userId } = req.body;
-
-  if (!postId || !userId) {
-    return res
-      .status(400)
-      .json({ success: false, msg: "Missing postId or userId" });
-  }
-
-  try {
-    const result = await Post.removePostLike(postId, userId);
-    res.json(result);
-  } catch (error) {
-    console.error("Error removing post like:", error);
-    res
-      .status(500)
-      .json({ success: false, msg: error.message || "Something went wrong" });
-  }
-});
+router.delete(
+  "/:postId/like",
+  auth,
+  validate(PostValidator.likePostParamsSchema, "params"),
+  postController.removePostLike,
+);
 
 router.post("/:postId/comment", async (req, res) => {
   const { postId } = req.params;

@@ -33,10 +33,7 @@ const PostCard = ({
           (like) => like.userId !== currentUser?.id,
         );
         setLikes(updatedLikes);
-        const { success, error } = await removePostLike(
-          item?.id,
-          currentUser?.id,
-        );
+        const { success, error } = await removePostLike(item?.id);
         if (!success) {
           console.error("Error un-liking post:", error);
         }

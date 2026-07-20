@@ -62,18 +62,13 @@ export const createPostLike = async (postId) => {
   }
 };
 
-export const removePostLike = async (postId, userId) => {
+export const removePostLike = async (postId) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
+    const res = await authFetch(`${API_BASE_URL}/posts/${postId}/like`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId }),
     });
 
-    const result = await res.json();
-    return result;
+    return await res.json();
   } catch (error) {
     console.error("Error removing post like via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
