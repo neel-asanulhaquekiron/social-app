@@ -38,7 +38,6 @@ const NewPost = () => {
 
     setLoading(true);
     const res = await createOrUpdatePost(data);
-    console.log("🚀 ~ onSubmit ~ res:", res);
     setLoading(false);
 
     if (res.success) {
