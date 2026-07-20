@@ -1,22 +1,22 @@
 import { API_BASE_URL } from "@/constants";
 import { supabase } from "@/lib/supabase";
+import { authFetch } from "./apiClient";
 import { getUserData } from "./userService";
 
 export const createOrUpdatePost = async (postData) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/posts/`, {
+    const res = await authFetch(`${API_BASE_URL}/posts`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(postData),
     });
 
-    const result = await res.json();
-    return result;
+    return await res.json();
   } catch (error) {
     console.error("Error creating/updating post via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
+    return {
+      success: false,
+      msg: error.message || "Something went wrong",
+    };
   }
 };
 
@@ -46,22 +46,19 @@ export const fetchPostById = async (postId) => {
   }
 };
 
-export const createPostLike = async (postLikeData) => {
+export const createPostLike = async (postId) => {
   try {
-    const { userId, postId } = postLikeData;
-    const res = await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
+    const res = await authFetch(`${API_BASE_URL}/posts/${postId}/like`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ userId }),
     });
 
-    const result = await res.json();
-    return result;
+    return await res.json();
   } catch (error) {
     console.error("Error creating post like via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
+    return {
+      success: false,
+      msg: error.message || "Something went wrong",
+    };
   }
 };
 
