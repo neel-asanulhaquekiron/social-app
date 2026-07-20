@@ -46,7 +46,7 @@ const PostCard = ({
           userId: currentUser?.id,
         };
         setLikes([...likes, data]);
-        const { success, error } = await createPostLike(data);
+        const { success, error } = await createPostLike(item?.id);
         if (success) {
           if (currentUser?.id !== item?.userId) {
             const notify = {
