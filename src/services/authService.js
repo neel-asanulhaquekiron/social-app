@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "@/constants";
+import { registerForPushNotificationsAsync } from "@/services/notificationPermissions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const signup = async ({ email, password, options }) => {
@@ -55,4 +56,22 @@ export const getToken = async () => {
 export const getStoredUser = async () => {
   const raw = await AsyncStorage.getItem("user");
   return raw ? JSON.parse(raw) : null;
+};
+
+// Inside your login() and signup() functions, after successful auth:
+export const registerPushToken = async (userId) => {
+  try {
+    const pushToken = await registerForPushNotificationsAsync();
+    if (!pushToken) {
+      return;
+    }
+
+    await fetch(`${API_BASE_URL}/users/registerPushToken`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, pushToken }),
+    });
+  } catch (error) {
+    console.error("Error registering push token:", error);
+  }
 };

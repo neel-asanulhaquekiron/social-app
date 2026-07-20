@@ -5,7 +5,7 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { signUpSchema } from "@/helpers/validationSchemas";
-import { signup } from "@/services/authService";
+import { registerPushToken, signup } from "@/services/authService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -27,25 +27,6 @@ const SignUp = () => {
     defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
-  // const onSubmit = async ({ name, email, password }) => {
-  //   setLoading(true);
-  //   try {
-  //     const { error } = await supabase.auth.signUp({
-  //       email: email.trim(),
-  //       password,
-  //       options: { data: { name: name.trim(), email: email.trim() } },
-  //     });
-
-  //     if (error) {
-  //       Alert.alert("Sign Up Failed", error.message);
-  //     }
-  //   } catch (error) {
-  //     Alert.alert("Sign Up Failed", error?.message || "Something went wrong");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const onSubmit = async ({ name, email, password }) => {
     setLoading(true);
     const result = await signup({
@@ -57,6 +38,7 @@ const SignUp = () => {
 
     if (result.success) {
       setAuth(result.user);
+      registerPushToken(result.user.id);
       router.replace("/home");
     } else {
       Alert.alert("Sign Up Failed", result.msg || "Something went wrong");

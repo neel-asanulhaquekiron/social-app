@@ -8,7 +8,8 @@
     "scheme": "socialapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.asanulhaquekironsteam.asanulhaque"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +33,13 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/splash-icon.png",
+          "color": "#ffffff"
         }
       ]
     ],

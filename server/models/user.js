@@ -5,6 +5,20 @@ const supabase = require("../config/db.js");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 class User {
+  static async registerPushToken(userId, pushToken) {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ pushToken })
+        .eq("id", userId);
+
+      if (error) return { success: false, msg: error.message };
+      return { success: true };
+    } catch (error) {
+      return { success: false, msg: error.message || "Something went wrong" };
+    }
+  }
+
   static async getUserData(userId) {
     try {
       const { data, error } = await supabase
