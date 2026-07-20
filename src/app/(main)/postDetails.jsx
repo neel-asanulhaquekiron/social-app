@@ -12,8 +12,6 @@ import {
   createComment,
   deleteComment,
   fetchPostById,
-  subscribeToComments,
-  unsubscribeFromChannel,
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -85,6 +83,13 @@ const PostDetails = () => {
       }
       inputRef?.current?.clear();
       commentRef.current = "";
+      setPostDetails((prevDetails) => ({
+        ...prevDetails,
+        comments: [
+          { ...newComment, user: { ...user } },
+          ...(prevDetails?.comments ?? []),
+        ],
+      }));
     } else {
       Alert.alert("Comment", msg || "Something went wrong");
     }
@@ -103,11 +108,11 @@ const PostDetails = () => {
   };
 
   useEffect(() => {
-    const commentChannel = subscribeToComments(postId, setPostDetails);
+    // const commentChannel = subscribeToComments(postId, setPostDetails);
     getPostDetails();
-    return () => {
-      unsubscribeFromChannel(commentChannel);
-    };
+    // return () => {
+    //   unsubscribeFromChannel(commentChannel);
+    // };
   }, []);
 
   if (startLoading) {
