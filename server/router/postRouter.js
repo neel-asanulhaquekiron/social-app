@@ -39,27 +39,13 @@ router.delete(
   postController.removePostLike,
 );
 
-router.post("/:postId/comment", async (req, res) => {
-  const { postId } = req.params;
-  const commentData = req.body;
-
-  if (!postId || !commentData.userId || !commentData.text) {
-    return res.status(400).json({
-      success: false,
-      msg: "Missing postId, userId, or text in request",
-    });
-  }
-
-  try {
-    const result = await Post.createComment({ ...commentData, postId });
-    res.json(result);
-  } catch (error) {
-    console.error("Error creating comment:", error);
-    res
-      .status(500)
-      .json({ success: false, msg: error.message || "Something went wrong" });
-  }
-});
+router.post(
+  "/:postId/comment",
+  auth,
+  validate(PostValidator.createCommentParamsSchema, "params"),
+  validate(PostValidator.createCommentBodySchema),
+  postController.createComment,
+);
 
 router.delete("/:postId/comment/:commentId", async (req, res) => {
   const { postId, commentId } = req.params;
