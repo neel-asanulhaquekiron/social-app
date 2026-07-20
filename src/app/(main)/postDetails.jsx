@@ -63,7 +63,6 @@ const PostDetails = () => {
 
     const data = {
       postId: postDetails?.id,
-      userId: user?.id,
       text,
     };
 

@@ -66,6 +66,32 @@ class PostController {
         .json({ success: false, msg: error.message || "Something went wrong" });
     }
   }
+
+  static async createComment(req, res) {
+    const { postId } = req.params;
+    const commentData = {
+      ...req.body,
+      postId,
+      userId: req.user.id,
+    };
+
+    if (!postId || !commentData.userId || !commentData.text) {
+      return res.status(400).json({
+        success: false,
+        msg: "Missing postId, userId, or text in request",
+      });
+    }
+
+    try {
+      const result = await Post.createComment(commentData);
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res
+        .status(500)
+        .json({ success: false, msg: error.message || "Something went wrong" });
+    }
+  }
 }
 
 module.exports = PostController;

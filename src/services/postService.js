@@ -77,16 +77,15 @@ export const removePostLike = async (postId) => {
 
 export const createComment = async (comment) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/posts/${comment.postId}/comment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const res = await authFetch(
+      `${API_BASE_URL}/posts/${comment.postId}/comment`,
+      {
+        method: "POST",
+        body: JSON.stringify(comment),
       },
-      body: JSON.stringify(comment),
-    });
+    );
 
-    const result = await res.json();
-    return result;
+    return await res.json();
   } catch (error) {
     console.error("Error creating comment via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
