@@ -60,6 +60,7 @@ export const getStoredUser = async () => {
 
 // Inside your login() and signup() functions, after successful auth:
 export const registerPushToken = async (userId) => {
+  console.log("🚀 ~ registerPushToken ~ userId:", userId);
   try {
     const pushToken = await registerForPushNotificationsAsync();
     if (!pushToken) {
