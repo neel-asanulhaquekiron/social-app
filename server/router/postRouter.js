@@ -1,46 +1,36 @@
 const express = require("express");
 const router = express.Router();
+const auth = require("../middlewares/auth");
 const Post = require("../models/post.js");
+const validate = require("../middlewares/validate");
+const PostValidator = require("../validators/validator.post");
+const postController = require("../controllers/post.controller.js");
 
-router.post("/", async (req, res) => {
-  const postData = req.body;
-  const result = await Post.createOrUpdatePost(postData);
-  res.json(result);
-});
+router.post(
+  "/",
+  auth,
+  validate(PostValidator.createPostSchema),
+  postController.createOrUpdatePost,
+);
 
-router.get("/", async (req, res) => {
-  const limit = parseInt(req.query.limit) || 10;
-  const userName = req.query.username || null;
-  const result = await Post.fetchPosts(limit, userName);
-  res.json(result);
-});
+router.get(
+  "/",
+  validate(PostValidator.fetchPostsQuerySchema, "query"),
+  postController.fetchPosts,
+);
 
-router.get("/:postId", async (req, res) => {
-  const postId = req.params.postId;
-  const result = await Post.fetchPostById(postId);
-  res.json(result);
-});
+router.get(
+  "/:postId",
+  validate(PostValidator.postIdParamsSchema, "params"),
+  postController.fetchPostById,
+);
 
-router.post("/:postId/like", async (req, res) => {
-  const { postId } = req.params;
-  const { userId } = req.body;
-
-  if (!postId || !userId) {
-    return res
-      .status(400)
-      .json({ success: false, msg: "Missing postId or userId" });
-  }
-
-  try {
-    const result = await Post.createPostLike({ postId, userId });
-    res.json(result);
-  } catch (error) {
-    console.error("Error creating post like:", error);
-    res
-      .status(500)
-      .json({ success: false, msg: error.message || "Something went wrong" });
-  }
-});
+router.post(
+  "/:postId/like",
+  auth,
+  validate(PostValidator.likePostParamsSchema, "params"),
+  postController.createPostLike,
+);
 
 router.delete("/:postId/like", async (req, res) => {
   const { postId } = req.params;
