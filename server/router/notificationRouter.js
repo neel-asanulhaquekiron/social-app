@@ -14,6 +14,12 @@ router.patch("/:notificationId", async (req, res) => {
   res.json(result);
 });
 
+router.get("/unseen-count/:receiverId", async (req, res) => {
+  const receiverId = req.params.receiverId;
+  const result = await Notification.getUnseenNotificationCount(receiverId);
+  res.json(result);
+});
+
 router.get("/:receiverId", async (req, res) => {
   const receiverId = req.params.receiverId;
   const result = await Notification.fetchNotifications(receiverId);

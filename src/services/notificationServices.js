@@ -18,7 +18,6 @@ export const createNotification = async (notificationData) => {
     });
 
     const result = await res.json();
-    console.log("createNotificationViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error creating notification via API:", error);
@@ -37,7 +36,6 @@ export const markNotificationAsClicked = async (notificationId) => {
     });
 
     const result = await res.json();
-    console.log("markNotificationAsClickedViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error marking notification as clicked via API:", error);
@@ -49,10 +47,22 @@ export const fetchNotifications = async (receiverId) => {
   try {
     const res = await fetch(`${API_BASE_URL}/notifications/${receiverId}`);
     const result = await res.json();
-    console.log("fetchNotificationsViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error fetching notifications via API:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
+  }
+};
+
+export const getUnseenNotificationCount = async (receiverId) => {
+  try {
+    const res = await fetch(
+      `${API_BASE_URL}/notifications/unseen-count/${receiverId}`,
+    );
+    const result = await res.json();
+    return result;
+  } catch (error) {
+    console.error("Error fetching unseen notification count via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
   }
 };

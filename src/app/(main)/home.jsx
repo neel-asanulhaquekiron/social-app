@@ -6,7 +6,10 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
-import { subscribeToNotifications } from "@/services/notificationServices";
+import {
+  getUnseenNotificationCount,
+  subscribeToNotifications,
+} from "@/services/notificationServices";
 import {
   fetchPosts,
   subscribeToAllComments,
@@ -35,6 +38,17 @@ const Home = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [usernameFilter, setUsernameFilter] = useState("");
   const limitRef = useRef(0);
+
+  const getNotificationCount = async () => {
+    if (!user?.id) {
+      return;
+    }
+
+    const { success, count, msg } = await getUnseenNotificationCount(user.id);
+    if (success) {
+      setNotificationCount(count);
+    }
+  };
 
   const getPosts = async ({ isNewSearch = false } = {}) => {
     if (!hasMorePosts && !isNewSearch) {
@@ -82,6 +96,8 @@ const Home = () => {
       user?.id,
       setNotificationCount,
     );
+
+    getNotificationCount();
 
     return () => {
       unsubscribeFromChannel(postChannel);
