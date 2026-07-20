@@ -13,7 +13,6 @@ export const createOrUpdatePost = async (postData) => {
     });
 
     const result = await res.json();
-    console.log("createOrUpdatePostViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error creating/updating post via API:", error);
@@ -40,7 +39,6 @@ export const fetchPostById = async (postId) => {
   try {
     const res = await fetch(`${API_BASE_URL}/posts/${postId}`);
     const result = await res.json();
-    console.log("fetchPostById result:", result);
     return result;
   } catch (error) {
     console.error("Error fetching post by ID via API:", error);
@@ -60,7 +58,6 @@ export const createPostLike = async (postLikeData) => {
     });
 
     const result = await res.json();
-    console.log("createPostLikeViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error creating post like via API:", error);
@@ -79,7 +76,6 @@ export const removePostLike = async (postId, userId) => {
     });
 
     const result = await res.json();
-    console.log("removePostLikeViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error removing post like via API:", error);
@@ -98,7 +94,6 @@ export const createComment = async (comment) => {
     });
 
     const result = await res.json();
-    console.log("createCommentViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error creating comment via API:", error);
@@ -116,7 +111,6 @@ export const deleteComment = async (commentId) => {
     });
 
     const result = await res.json();
-    console.log("deleteCommentViaAPI result:", result);
     return result;
   } catch (error) {
     console.error("Error deleting comment via API:", error);

@@ -10,7 +10,6 @@ import { StyleSheet, Text, View } from "react-native";
 
 const Profile = () => {
   const { user, setAuth } = useAuth();
-  console.log("🚀 ~ Profile ~ user:", user);
   const router = useRouter();
 
   const onLogout = () => handleLogOut({ setAuth, router });

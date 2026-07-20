@@ -4,7 +4,6 @@ export const getUserData = async (userId) => {
   try {
     const res = await fetch(`${API_BASE_URL}/users/${userId}`);
     const result = await res.json();
-    console.log("🚀 ~ getUserData ~ result:", result);
     return result;
   } catch (error) {
     console.error("Error fetching user data via API:", error);
