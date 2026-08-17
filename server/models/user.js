@@ -1,8 +1,9 @@
 const jwt = require("jsonwebtoken");
 const { supabase, supabaseAuth } = require("../config/db.js");
 const { ok, fail, dbError } = require("../utils/result");
+const logger = require("../config/logger");
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const { JWT_SECRET } = require("../config/env");
 
 const PROFILE_COLUMNS = "id, name, email";
 
@@ -77,7 +78,7 @@ class User {
         if (status === 429) {
           return fail("Too many attempts, please try again later", "bad_request");
         }
-        console.error("Signup error:", error);
+        logger.warn({ err: error }, "signup rejected by auth provider");
         return fail("Could not create the account", "bad_request");
       }
 

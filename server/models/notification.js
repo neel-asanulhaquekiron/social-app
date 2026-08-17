@@ -1,5 +1,6 @@
 const supabase = require("../config/db.js");
 const { ok, fail, dbError } = require("../utils/result");
+const logger = require("../config/logger");
 
 class Notification {
   static async createNotification(notificationData) {
@@ -82,7 +83,7 @@ class Notification {
         .not("isSeen", "is", true)
         .then(({ error: updateError }) => {
           if (updateError) {
-            console.error("Error marking notifications as seen:", updateError);
+            logger.error({ err: updateError }, "error marking notifications as seen");
           }
         });
 
