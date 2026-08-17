@@ -3,24 +3,6 @@ const { ok, fail, dbError } = require("../utils/result");
 const logger = require("../config/logger");
 
 class Notification {
-  static async createNotification(notificationData) {
-    try {
-      const { data, error } = await supabase
-        .from("notifications")
-        .insert(notificationData)
-        .select()
-        .single();
-
-      if (error) {
-        return dbError("creating notification", error);
-      }
-
-      return ok({ data });
-    } catch (error) {
-      return dbError("creating notification", error);
-    }
-  }
-
   static async markNotificationAsClicked(notificationId, receiverId) {
     try {
       const { data, error } = await supabase

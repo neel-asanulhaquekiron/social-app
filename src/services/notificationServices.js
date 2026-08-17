@@ -3,19 +3,6 @@ import { supabase } from "@/lib/supabase";
 import { authFetch } from "./apiClient";
 import { unsubscribeFromChannel } from "./postService";
 
-export const createNotification = async ({ receiverId, title, data }) => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/notifications`, {
-      method: "POST",
-      body: JSON.stringify({ receiverId, title, data }),
-    });
-    return await res.json();
-  } catch (error) {
-    console.error("Error creating notification via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
-
 export const markNotificationAsClicked = async (notificationId) => {
   try {
     const res = await authFetch(

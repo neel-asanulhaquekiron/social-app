@@ -7,7 +7,6 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
-import { createNotification } from "@/services/notificationServices";
 import {
   createComment,
   deleteComment,
@@ -69,17 +68,7 @@ const PostDetails = () => {
     setSendingComment(false);
 
     if (success) {
-      if (user?.id !== postDetails?.userId) {
-        const notify = {
-          receiverId: postDetails?.userId,
-          title: "commented on your post",
-          data: JSON.stringify({
-            postId: postDetails?.id,
-            commentId: newComment?.id,
-          }),
-        };
-        await createNotification(notify);
-      }
+      // The server creates the owner's notification + push after a comment.
       inputRef?.current?.clear();
       commentRef.current = "";
       setPostDetails((prevDetails) => ({

@@ -1,6 +1,5 @@
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
-import { createNotification } from "@/services/notificationServices";
 import { createPostLike, removePostLike } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import moment from "moment";
@@ -33,9 +32,9 @@ const PostCard = ({
           (like) => like.userId !== currentUser?.id,
         );
         setLikes(updatedLikes);
-        const { success, error } = await removePostLike(item?.id);
+        const { success, msg } = await removePostLike(item?.id);
         if (!success) {
-          console.error("Error un-liking post:", error);
+          console.error("Error un-liking post:", msg);
         }
       } else {
         const data = {
@@ -43,18 +42,10 @@ const PostCard = ({
           userId: currentUser?.id,
         };
         setLikes([...likes, data]);
-        const { success, error } = await createPostLike(item?.id);
-        if (success) {
-          if (currentUser?.id !== item?.userId) {
-            const notify = {
-              receiverId: item?.userId,
-              title: "liked your post",
-              data: JSON.stringify({ postId: item?.id }),
-            };
-            await createNotification(notify);
-          }
-        } else {
-          console.error("Error liking post:", error);
+        // The server creates the owner's notification + push after a like.
+        const { success, msg } = await createPostLike(item?.id);
+        if (!success) {
+          console.error("Error liking post:", msg);
         }
       }
     } catch (error) {
