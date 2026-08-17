@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const supabase = require("../config/db.js");
+const { supabase, supabaseAuth } = require("../config/db.js");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -41,7 +41,7 @@ class User {
 
   static async signup({ email, password, options }) {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabaseAuth.auth.signUp({
         email,
         password,
         options,
@@ -75,7 +75,7 @@ class User {
 
   static async login({ email, password }) {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabaseAuth.auth.signInWithPassword({
         email,
         password,
       });
