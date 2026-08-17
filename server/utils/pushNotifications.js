@@ -1,12 +1,13 @@
 const { Expo } = require("expo-server-sdk");
 const supabase = require("../config/db.js");
+const logger = require("../config/logger");
 
 const expo = new Expo();
 
 class PushNotificationService {
   static async sendPushNotification(pushToken, title, body, data = {}) {
     if (!Expo.isExpoPushToken(pushToken)) {
-      console.error(`Invalid Expo push token: ${pushToken}`);
+      logger.warn("invalid Expo push token supplied");
       return;
     }
 
@@ -24,8 +25,9 @@ class PushNotificationService {
 
       for (const ticket of tickets) {
         if (ticket.status === "error") {
-          console.error(
-            `Push ticket error (${ticket.details?.error || "unknown"}): ${ticket.message}`,
+          logger.error(
+            { error: ticket.details?.error, message: ticket.message },
+            "push ticket error",
           );
 
           if (ticket.details?.error === "DeviceNotRegistered") {
@@ -37,7 +39,7 @@ class PushNotificationService {
         }
       }
     } catch (error) {
-      console.error("Error sending push notification:", error);
+      logger.error({ err: error }, "error sending push notification");
     }
   }
 }

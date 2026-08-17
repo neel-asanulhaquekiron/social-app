@@ -6,7 +6,8 @@
 //   dbError(context, error)     -> logs the real DB error, returns a sanitized failure
 //   sendResult(res, result, ok) -> writes the right status code + JSON body
 
-const isDev = ["development", "test"].includes(process.env.NODE_ENV);
+const logger = require("../config/logger");
+const { isDev } = require("../config/env");
 
 const STATUS_BY_CODE = {
   bad_request: 400,
@@ -24,7 +25,7 @@ const fail = (msg, code = "bad_request") => ({ success: false, msg, code });
 // Never echo raw database/library messages to clients in production — they can
 // reveal table/column names and constraint details. In dev keep them visible.
 const dbError = (context, error) => {
-  console.error(`Error ${context}:`, error);
+  logger.error({ err: error, context }, `error ${context}`);
 
   // Postgres error codes that map cleanly to client-facing statuses.
   if (error?.code === "23503") {
