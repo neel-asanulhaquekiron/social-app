@@ -1,6 +1,5 @@
 const supabase = require("../config/db.js");
 const { ok, fail, dbError } = require("../utils/result");
-const logger = require("../config/logger");
 
 class Notification {
   static async markNotificationAsClicked(notificationId, receiverId) {
@@ -57,21 +56,29 @@ class Notification {
         return dbError("fetching notifications", error);
       }
 
-      // Fire-and-forget: mark unseen notifications as seen, don't block the response on it
-      supabase
+      return ok({ data });
+    } catch (error) {
+      return dbError("fetching notifications", error);
+    }
+  }
+
+  // Marks every unseen notification of the receiver as seen (idempotent).
+  static async markAllSeen(receiverId) {
+    try {
+      const { data, error } = await supabase
         .from("notifications")
         .update({ isSeen: true })
         .eq("receiverId", receiverId)
         .not("isSeen", "is", true)
-        .then(({ error: updateError }) => {
-          if (updateError) {
-            logger.error({ err: updateError }, "error marking notifications as seen");
-          }
-        });
+        .select("id");
 
-      return ok({ data });
+      if (error) {
+        return dbError("marking notifications as seen", error);
+      }
+
+      return ok({ updated: data?.length ?? 0 });
     } catch (error) {
-      return dbError("fetching notifications", error);
+      return dbError("marking notifications as seen", error);
     }
   }
 }
