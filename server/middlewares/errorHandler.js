@@ -26,7 +26,7 @@ const errorHandler = (err, req, res, next) => {
   }
 
   const status = Number.isInteger(err?.status) ? err.status : 500;
-  console.error(`Unhandled error on ${req.method} ${req.originalUrl}:`, err);
+  (req.log || require("../config/logger")).error({ err }, `unhandled error on ${req.method} ${req.originalUrl}`);
 
   res.status(status).json({
     success: false,
