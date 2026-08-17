@@ -11,6 +11,21 @@ const signToken = (user) =>
   jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "7d" });
 
 class User {
+  // Clears the caller's stored push token (logout / opt-out).
+  static async unregisterPushToken(userId) {
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ pushToken: null })
+        .eq("id", userId);
+
+      if (error) return dbError("unregistering push token", error);
+      return ok();
+    } catch (error) {
+      return dbError("unregistering push token", error);
+    }
+  }
+
   static async registerPushToken(userId, pushToken) {
     try {
       const { error } = await supabase
