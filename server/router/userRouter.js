@@ -14,6 +14,8 @@ router.post(
   UserController.registerPushToken,
 );
 
+router.get("/me", auth, UserController.getMe);
+
 router.get(
   "/:userId",
   auth,

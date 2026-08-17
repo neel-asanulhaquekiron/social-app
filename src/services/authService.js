@@ -60,7 +60,8 @@ export const getStoredUser = async () => {
 };
 
 // Inside your login() and signup() functions, after successful auth:
-export const registerPushToken = async (userId) => {
+// The server binds the token to the authenticated user (from the JWT).
+export const registerPushToken = async () => {
   try {
     const pushToken = await registerForPushNotificationsAsync();
     if (!pushToken) {
@@ -69,7 +70,7 @@ export const registerPushToken = async (userId) => {
 
     const res = await authFetch(`${API_BASE_URL}/users/registerPushToken`, {
       method: "POST",
-      body: JSON.stringify({ userId, pushToken }),
+      body: JSON.stringify({ pushToken }),
     });
 
     if (!res.ok) {
