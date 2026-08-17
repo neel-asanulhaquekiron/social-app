@@ -1,29 +1,29 @@
 const express = require("express");
 const router = express.Router();
-const Notification = require("../models/notification.js");
 
-router.post("/", async (req, res) => {
-  const notificationData = req.body;
-  const result = await Notification.createNotification(notificationData);
-  res.json(result);
-});
+const auth = require("../middlewares/auth");
+const validate = require("../middlewares/validate");
+const NotificationValidator = require("../validators/validator.notification");
+const NotificationController = require("../controllers/notification.controller");
 
-router.patch("/:notificationId", async (req, res) => {
-  const notificationId = req.params.notificationId;
-  const result = await Notification.markNotificationAsClicked(notificationId);
-  res.json(result);
-});
+// Every notification route is scoped to the authenticated user (req.user.id);
+// callers never pass a receiverId in the URL.
+router.use(auth);
 
-router.get("/unseen-count/:receiverId", async (req, res) => {
-  const receiverId = req.params.receiverId;
-  const result = await Notification.getUnseenNotificationCount(receiverId);
-  res.json(result);
-});
+router.post(
+  "/",
+  validate(NotificationValidator.createNotificationSchema),
+  NotificationController.create,
+);
 
-router.get("/:receiverId", async (req, res) => {
-  const receiverId = req.params.receiverId;
-  const result = await Notification.fetchNotifications(receiverId);
-  res.json(result);
-});
+router.get("/unseen-count", NotificationController.unseenCount);
+
+router.get("/", NotificationController.list);
+
+router.patch(
+  "/:notificationId/clicked",
+  validate(NotificationValidator.notificationIdParamsSchema, "params"),
+  NotificationController.markClicked,
+);
 
 module.exports = router;

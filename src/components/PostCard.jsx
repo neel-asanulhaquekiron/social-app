@@ -47,7 +47,6 @@ const PostCard = ({
         if (success) {
           if (currentUser?.id !== item?.userId) {
             const notify = {
-              senderId: currentUser?.id,
               receiverId: item?.userId,
               title: "liked your post",
               data: JSON.stringify({ postId: item?.id }),

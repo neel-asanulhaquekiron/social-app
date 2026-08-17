@@ -21,18 +21,23 @@ class Notification {
     }
   }
 
-  static async markNotificationAsClicked(notificationId) {
+  static async markNotificationAsClicked(notificationId, receiverId) {
     try {
       const { data, error } = await supabase
         .from("notifications")
         .update({ isClicked: true })
         .eq("id", notificationId)
+        .eq("receiverId", receiverId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error marking notification as clicked:", error);
         return { success: false, msg: error.message };
+      }
+
+      if (!data) {
+        return { success: false, notFound: true, msg: "Notification not found" };
       }
 
       return { success: true, data };
@@ -46,7 +51,7 @@ class Notification {
     try {
       const { count, error } = await supabase
         .from("notifications")
-        .select("*", { count: "exact" })
+        .select("id", { count: "exact", head: true })
         .eq("receiverId", receiverId)
         .not("isSeen", "is", true);
 

@@ -71,7 +71,6 @@ const PostDetails = () => {
     if (success) {
       if (user?.id !== postDetails?.userId) {
         const notify = {
-          senderId: user?.id,
           receiverId: postDetails?.userId,
           title: "commented on your post",
           data: JSON.stringify({
