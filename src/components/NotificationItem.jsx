@@ -5,12 +5,24 @@ import { markNotificationAsClicked } from "@/services/notificationServices";
 import moment from "moment";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+// `data` is jsonb from the API (object); tolerate legacy JSON strings too.
+const parseNotificationData = (data) => {
+  if (!data) return {};
+  if (typeof data === "object") return data;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return {};
+  }
+};
+
 const NotificationItem = ({ item, router, setNotifications }) => {
   const { id, title, data, sender, created_at, isClicked } = item || {};
   const createdAt = moment(created_at).format("MMM D");
 
   const handleClick = async () => {
-    let { postId, commentId } = JSON.parse(data ?? "{}");
+    const parsed = parseNotificationData(data);
+    const { postId, commentId } = parsed;
     router.push({ pathname: "postDetails", params: { postId, commentId } });
     if (!isClicked && id) {
       setNotifications((prevNotifications) =>

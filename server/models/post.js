@@ -73,11 +73,13 @@ class Post {
 
   static async createPostLike(postLike) {
     try {
+      // UNIQUE (postId, userId) makes this idempotent: a double-tap or a
+      // retried request never creates a second like.
       const { data, error } = await supabase
         .from("postLikes")
-        .insert(postLike)
+        .upsert(postLike, { onConflict: "postId,userId", ignoreDuplicates: true })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         return dbError("creating post like", error);
