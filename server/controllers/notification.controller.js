@@ -1,27 +1,7 @@
 const Notification = require("../models/notification.js");
-const { fail, sendResult } = require("../utils/result");
+const { sendResult } = require("../utils/result");
 
 class NotificationController {
-  // POST /notifications — sender is always the authenticated user.
-  static async create(req, res) {
-    const { receiverId, title, data } = req.body;
-    const senderId = req.user.id;
-
-    if (receiverId === senderId) {
-      return sendResult(res, fail("Cannot notify yourself"));
-    }
-
-    const result = await Notification.createNotification({
-      senderId,
-      receiverId,
-      title,
-      data: data ?? null,
-      isSeen: false,
-      isClicked: false,
-    });
-    sendResult(res, result, 201);
-  }
-
   // PATCH /notifications/:notificationId/clicked — only the receiver may mark it.
   static async markClicked(req, res) {
     const result = await Notification.markNotificationAsClicked(
