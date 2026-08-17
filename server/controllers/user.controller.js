@@ -17,6 +17,12 @@ class UserController {
     sendResult(res, result);
   }
 
+  // DELETE /users/pushToken — clears the authenticated user's push token.
+  static async unregisterPushToken(req, res) {
+    const result = await User.unregisterPushToken(req.user.id);
+    sendResult(res, result);
+  }
+
   // POST /users/registerPushToken — always bound to the authenticated user.
   static async registerPushToken(req, res) {
     const result = await User.registerPushToken(req.user.id, req.body.pushToken);
