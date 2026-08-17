@@ -1,5 +1,9 @@
 import { API_BASE_URL } from "@/constants";
-import { registerForPushNotificationsAsync } from "@/services/notificationPermissions";
+import { supabase } from "@/lib/supabase";
+import {
+  clearNotificationBadge,
+  registerForPushNotificationsAsync,
+} from "@/services/notificationPermissions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authFetch } from "./apiClient";
 
@@ -45,9 +49,40 @@ export const login = async ({ email, password }) => {
   }
 };
 
+export const unregisterPushToken = async () => {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/users/pushToken`, {
+      method: "DELETE",
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("Error unregistering push token:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
+  }
+};
+
+// Full teardown: stop pushes for this device, drop realtime channels, clear
+// the badge, then forget the session. Best-effort — always ends signed out.
 export const logout = async () => {
-  await AsyncStorage.removeItem("token");
-  await AsyncStorage.removeItem("user");
+  try {
+    await unregisterPushToken(); // needs the token, so do it first
+  } catch (error) {
+    console.error("Error during logout cleanup:", error);
+  }
+
+  try {
+    await supabase.removeAllChannels();
+  } catch (error) {
+    console.error("Error removing realtime channels:", error);
+  }
+
+  try {
+    await clearNotificationBadge();
+  } catch (error) {
+    console.error("Error clearing notification badge:", error);
+  }
+
+  await AsyncStorage.multiRemove(["token", "user"]);
 };
 
 export const getToken = async () => {

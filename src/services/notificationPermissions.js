@@ -58,6 +58,12 @@ export const addNotificationResponseListener = async (onResponse) => {
   return () => subscription.remove();
 };
 
+export const clearNotificationBadge = async () => {
+  if (isExpoGo && Platform.OS === "android") return;
+  const Notifications = await getNotifications();
+  await Notifications.setBadgeCountAsync(0);
+};
+
 export const registerForPushNotificationsAsync = async () => {
   if (isExpoGo && Platform.OS === "android") {
     console.log(
