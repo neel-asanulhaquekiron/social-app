@@ -11,9 +11,11 @@ const NotificationController = require("../controllers/notification.controller")
 // callers never pass a receiverId in the URL.
 router.use(auth);
 
-router.get("/unseen-count", NotificationController.unseenCount);
+router.get("/unseen-count", asyncHandler(NotificationController.unseenCount));
 
-router.get("/", NotificationController.list);
+router.post("/mark-seen", asyncHandler(NotificationController.markAllSeen));
+
+router.get("/", asyncHandler(NotificationController.list));
 
 router.patch(
   "/:notificationId/clicked",

@@ -15,7 +15,7 @@ router.post(
   asyncHandler(UserController.registerPushToken),
 );
 
-router.get("/me", auth, UserController.getMe);
+router.get("/me", auth, asyncHandler(UserController.getMe));
 
 router.get(
   "/:userId",
