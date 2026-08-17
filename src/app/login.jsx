@@ -33,7 +33,7 @@ const Login = () => {
     setLoading(true);
     const result = await login({
       email: email.trim(),
-      password: password.trim(),
+      password,
     });
     setLoading(false);
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const asyncHandler = require("../utils/asyncHandler");
 const auth = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
 const PostValidator = require("../validators/validator.post");
@@ -9,33 +10,33 @@ router.post(
   "/",
   auth,
   validate(PostValidator.createPostSchema),
-  postController.createOrUpdatePost,
+  asyncHandler(postController.createOrUpdatePost),
 );
 
 router.get(
   "/",
   validate(PostValidator.fetchPostsQuerySchema, "query"),
-  postController.fetchPosts,
+  asyncHandler(postController.fetchPosts),
 );
 
 router.get(
   "/:postId",
   validate(PostValidator.postIdParamsSchema, "params"),
-  postController.fetchPostById,
+  asyncHandler(postController.fetchPostById),
 );
 
 router.post(
   "/:postId/like",
   auth,
   validate(PostValidator.likePostParamsSchema, "params"),
-  postController.createPostLike,
+  asyncHandler(postController.createPostLike),
 );
 
 router.delete(
   "/:postId/like",
   auth,
   validate(PostValidator.likePostParamsSchema, "params"),
-  postController.removePostLike,
+  asyncHandler(postController.removePostLike),
 );
 
 router.post(
@@ -43,14 +44,14 @@ router.post(
   auth,
   validate(PostValidator.createCommentParamsSchema, "params"),
   validate(PostValidator.createCommentBodySchema),
-  postController.createComment,
+  asyncHandler(postController.createComment),
 );
 
 router.delete(
   "/:postId/comment/:commentId",
   auth,
   validate(PostValidator.deleteCommentParamsSchema, "params"),
-  postController.deleteComment,
+  asyncHandler(postController.deleteComment),
 );
 
 module.exports = router;
