@@ -32,7 +32,7 @@ class Notification {
         .from("notifications")
         .select("id", { count: "exact", head: true })
         .eq("receiverId", receiverId)
-        .not("isSeen", "is", true);
+        .eq("isSeen", false);
 
       if (error) {
         return dbError("fetching unseen notification count", error);
@@ -69,7 +69,7 @@ class Notification {
         .from("notifications")
         .update({ isSeen: true })
         .eq("receiverId", receiverId)
-        .not("isSeen", "is", true)
+        .eq("isSeen", false)
         .select("id");
 
       if (error) {
