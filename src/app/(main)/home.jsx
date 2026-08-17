@@ -44,7 +44,7 @@ const Home = () => {
       return;
     }
 
-    const { success, count, msg } = await getUnseenNotificationCount(user.id);
+    const { success, count, msg } = await getUnseenNotificationCount();
     if (success) {
       setNotificationCount(count);
     }
