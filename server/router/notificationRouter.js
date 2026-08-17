@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const asyncHandler = require("../utils/asyncHandler");
 
 const auth = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
@@ -13,7 +14,7 @@ router.use(auth);
 router.post(
   "/",
   validate(NotificationValidator.createNotificationSchema),
-  NotificationController.create,
+  asyncHandler(NotificationController.create),
 );
 
 router.get("/unseen-count", NotificationController.unseenCount);
@@ -23,7 +24,7 @@ router.get("/", NotificationController.list);
 router.patch(
   "/:notificationId/clicked",
   validate(NotificationValidator.notificationIdParamsSchema, "params"),
-  NotificationController.markClicked,
+  asyncHandler(NotificationController.markClicked),
 );
 
 module.exports = router;

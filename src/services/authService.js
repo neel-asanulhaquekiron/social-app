@@ -3,12 +3,12 @@ import { registerForPushNotificationsAsync } from "@/services/notificationPermis
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authFetch } from "./apiClient";
 
-export const signup = async ({ email, password, options }) => {
+export const signup = async ({ email, password, name }) => {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, options }),
+      body: JSON.stringify({ email, password, name }),
     });
     const result = await res.json();
 

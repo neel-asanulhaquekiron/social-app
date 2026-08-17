@@ -1,24 +1,21 @@
 const express = require("express");
-const User = require("../models/user.js");
-
 const router = express.Router();
 
-router.post("/signup", async (req, res) => {
-  try {
-    const result = await User.signup(req.body);
-    res.status(result.success ? 201 : 400).json(result);
-  } catch (error) {
-    res.status(500).json({ success: false, msg: "Internal server error" });
-  }
-});
+const validate = require("../middlewares/validate");
+const asyncHandler = require("../utils/asyncHandler");
+const AuthValidator = require("../validators/validator.auth");
+const AuthController = require("../controllers/auth.controller");
 
-router.post("/login", async (req, res) => {
-  try {
-    const result = await User.login(req.body);
-    res.status(result.success ? 200 : 401).json(result);
-  } catch (error) {
-    res.status(500).json({ success: false, msg: "Internal server error" });
-  }
-});
+router.post(
+  "/signup",
+  validate(AuthValidator.signupSchema),
+  asyncHandler(AuthController.signup),
+);
+
+router.post(
+  "/login",
+  validate(AuthValidator.loginSchema),
+  asyncHandler(AuthController.login),
+);
 
 module.exports = router;

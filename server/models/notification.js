@@ -1,4 +1,5 @@
 const supabase = require("../config/db.js");
+const { ok, fail, dbError } = require("../utils/result");
 
 class Notification {
   static async createNotification(notificationData) {
@@ -10,14 +11,12 @@ class Notification {
         .single();
 
       if (error) {
-        console.error("Error creating notification:", error);
-        return { success: false, msg: error.message };
+        return dbError("creating notification", error);
       }
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error creating notification:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("creating notification", error);
     }
   }
 
@@ -32,18 +31,16 @@ class Notification {
         .maybeSingle();
 
       if (error) {
-        console.error("Error marking notification as clicked:", error);
-        return { success: false, msg: error.message };
+        return dbError("marking notification as clicked", error);
       }
 
       if (!data) {
-        return { success: false, notFound: true, msg: "Notification not found" };
+        return fail("Notification not found", "not_found");
       }
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error marking notification as clicked:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("marking notification as clicked", error);
     }
   }
 
@@ -56,14 +53,12 @@ class Notification {
         .not("isSeen", "is", true);
 
       if (error) {
-        console.error("Error fetching unseen notification count:", error);
-        return { success: false, msg: error.message };
+        return dbError("fetching unseen notification count", error);
       }
 
-      return { success: true, count };
+      return ok({ count });
     } catch (error) {
-      console.error("Error fetching unseen notification count:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("fetching unseen notification count", error);
     }
   }
 
@@ -76,8 +71,7 @@ class Notification {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching notifications:", error);
-        return { success: false, msg: error.message };
+        return dbError("fetching notifications", error);
       }
 
       // Fire-and-forget: mark unseen notifications as seen, don't block the response on it
@@ -92,10 +86,9 @@ class Notification {
           }
         });
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error fetching notifications:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("fetching notifications", error);
     }
   }
 }

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const asyncHandler = require("../utils/asyncHandler");
 
 const auth = require("../middlewares/auth");
 const validate = require("../middlewares/validate");
@@ -11,7 +12,7 @@ router.post(
   "/registerPushToken",
   auth,
   validate(UserValidator.registerPushTokenSchema),
-  UserController.registerPushToken,
+  asyncHandler(UserController.registerPushToken),
 );
 
 router.get("/me", auth, UserController.getMe);
@@ -20,7 +21,7 @@ router.get(
   "/:userId",
   auth,
   validate(UserValidator.userIdParamsSchema, "params"),
-  UserController.getUserData,
+  asyncHandler(UserController.getUserData),
 );
 
 module.exports = router;
