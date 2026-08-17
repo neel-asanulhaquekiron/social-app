@@ -1,5 +1,6 @@
 const PushNotificationService = require("../utils/pushNotifications.js");
 const supabase = require("../config/db.js");
+const { ok, fail, dbError } = require("../utils/result");
 
 class Post {
   static async createOrUpdatePost(postData) {
@@ -11,14 +12,12 @@ class Post {
         .single();
 
       if (error) {
-        console.error("Error creating/updating post:", error);
-        return { success: false, msg: error.message };
+        return dbError("creating/updating post", error);
       }
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error creating/updating post:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("creating/updating post", error);
     }
   }
 
@@ -39,14 +38,12 @@ class Post {
       const { data, error } = await query;
 
       if (error) {
-        console.error("Error fetching posts:", error);
-        return { success: false, msg: error.message };
+        return dbError("fetching posts", error);
       }
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error fetching posts:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("fetching posts", error);
     }
   }
 
@@ -58,18 +55,20 @@ class Post {
           "*, user: users (id, name), postLikes (*), comments (* , user: users(id, name))",
         )
         .eq("id", postId)
-        .order("created_at", { ascending: false, foreignTable: "comments" })
-        .single();
+        .order("created_at", { ascending: false, referencedTable: "comments" })
+        .maybeSingle();
 
       if (error) {
-        console.error("Error fetching post by ID:", error);
-        return { success: false, msg: error.message };
+        return dbError("fetching post by ID", error);
       }
 
-      return { success: true, data };
+      if (!data) {
+        return fail("Post not found", "not_found");
+      }
+
+      return ok({ data });
     } catch (error) {
-      console.error("Error fetching post by ID:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("fetching post by ID", error);
     }
   }
 
@@ -82,8 +81,7 @@ class Post {
         .single();
 
       if (error) {
-        console.error("Error creating post like:", error);
-        return { success: false, msg: error.message };
+        return dbError("creating post like", error);
       }
 
       const { data: post } = await supabase
@@ -109,10 +107,9 @@ class Post {
         }
       }
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error creating post like:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("creating post like", error);
     }
   }
 
@@ -125,14 +122,12 @@ class Post {
         .eq("userId", userId);
 
       if (error) {
-        console.error("Error removing post like:", error);
-        return { success: false, msg: error.message };
+        return dbError("removing post like", error);
       }
 
-      return { success: true };
+      return ok();
     } catch (error) {
-      console.error("Error removing post like:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("removing post like", error);
     }
   }
 
@@ -145,8 +140,7 @@ class Post {
         .single();
 
       if (error) {
-        console.error("Error creating comment:", error);
-        return { success: false, msg: error.message };
+        return dbError("creating comment", error);
       }
 
       const { data: post } = await supabase
@@ -172,10 +166,9 @@ class Post {
         }
       }
 
-      return { success: true, data };
+      return ok({ data });
     } catch (error) {
-      console.error("Error creating comment:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("creating comment", error);
     }
   }
 
@@ -190,22 +183,17 @@ class Post {
         .maybeSingle();
 
       if (fetchError) {
-        console.error("Error fetching comment:", fetchError);
-        return { success: false, msg: fetchError.message };
+        return dbError("fetching comment", fetchError);
       }
 
       if (!comment) {
-        return { success: false, notFound: true, msg: "Comment not found" };
+        return fail("Comment not found", "not_found");
       }
 
       const isAuthor = comment.userId === requesterId;
       const isPostOwner = comment.post?.userId === requesterId;
       if (!isAuthor && !isPostOwner) {
-        return {
-          success: false,
-          forbidden: true,
-          msg: "Not allowed to delete this comment",
-        };
+        return fail("Not allowed to delete this comment", "forbidden");
       }
 
       const { error } = await supabase
@@ -215,14 +203,12 @@ class Post {
         .eq("postId", postId);
 
       if (error) {
-        console.error("Error deleting comment:", error);
-        return { success: false, msg: error.message };
+        return dbError("deleting comment", error);
       }
 
-      return { success: true };
+      return ok();
     } catch (error) {
-      console.error("Error deleting comment:", error);
-      return { success: false, msg: error.message || "Something went wrong" };
+      return dbError("deleting comment", error);
     }
   }
 }

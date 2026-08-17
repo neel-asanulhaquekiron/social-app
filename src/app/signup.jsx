@@ -31,8 +31,8 @@ const SignUp = () => {
     setLoading(true);
     const result = await signup({
       email: email.trim(),
-      password: password.trim(),
-      options: { data: { name: name.trim(), email: email.trim() } },
+      password,
+      name: name.trim(),
     });
     setLoading(false);
 
