@@ -22,11 +22,11 @@ const Notifications = () => {
 
     setIsLoading(true);
     try {
-      const { success, data, error } = await fetchNotifications(user?.id);
+      const { success, data, msg } = await fetchNotifications();
       if (success) {
         setNotifications(data);
       } else {
-        console.error("Error fetching notifications:", error);
+        console.error("Error fetching notifications:", msg);
       }
     } catch (error) {
       console.error("Error fetching notifications:", error);
