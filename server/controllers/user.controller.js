@@ -17,6 +17,23 @@ class UserController {
       });
     }
   }
+
+  static async registerPushToken(req, res) {
+    try {
+      const { userId, pushToken } = req.body;
+
+      const result = await User.registerPushToken(userId, pushToken);
+
+      res.status(result.success ? 200 : 400).json(result);
+    } catch (error) {
+      console.error("Error registering push token:", error);
+
+      res.status(500).json({
+        success: false,
+        msg: error.message || "Something went wrong",
+      });
+    }
+  }
 }
 
 module.exports = UserController;

@@ -44,5 +44,7 @@ example
 /ios
 /android
 
-google-services.json
+# google-services.json is intentionally committed (public identifiers only);
+# the Firebase *service account* key must never be committed.
+*firebase-adminsdk*.json
 .env
