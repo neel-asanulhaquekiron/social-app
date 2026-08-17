@@ -179,12 +179,40 @@ class Post {
     }
   }
 
-  static async deleteComment(commentId) {
+  // Only the comment author or the post owner may delete a comment.
+  static async deleteComment(commentId, postId, requesterId) {
     try {
+      const { data: comment, error: fetchError } = await supabase
+        .from("comments")
+        .select("id, userId, post:posts!inner(userId)")
+        .eq("id", commentId)
+        .eq("postId", postId)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error fetching comment:", fetchError);
+        return { success: false, msg: fetchError.message };
+      }
+
+      if (!comment) {
+        return { success: false, notFound: true, msg: "Comment not found" };
+      }
+
+      const isAuthor = comment.userId === requesterId;
+      const isPostOwner = comment.post?.userId === requesterId;
+      if (!isAuthor && !isPostOwner) {
+        return {
+          success: false,
+          forbidden: true,
+          msg: "Not allowed to delete this comment",
+        };
+      }
+
       const { error } = await supabase
         .from("comments")
         .delete()
-        .eq("id", commentId);
+        .eq("id", commentId)
+        .eq("postId", postId);
 
       if (error) {
         console.error("Error deleting comment:", error);
