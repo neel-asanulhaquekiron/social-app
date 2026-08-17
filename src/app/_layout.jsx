@@ -72,7 +72,7 @@ const MainLayout = () => {
 
       if (token && user) {
         setAuth(user);
-        registerPushToken(user.id);
+        registerPushToken();
         router.replace("/home");
       } else {
         setAuth(null);

@@ -39,7 +39,7 @@ const Login = () => {
 
     if (result.success) {
       setAuth(result.user);
-      registerPushToken(result.user.id);
+      registerPushToken();
       router.replace("/home");
     } else {
       Alert.alert("Login Failed", result.msg || "Something went wrong");
