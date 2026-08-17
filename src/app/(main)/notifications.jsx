@@ -4,7 +4,10 @@ import NotificationItem from "@/components/NotificationItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
-import { fetchNotifications } from "@/services/notificationServices";
+import {
+  fetchNotifications,
+  markNotificationsSeen,
+} from "@/services/notificationServices";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -25,6 +28,8 @@ const Notifications = () => {
       const { success, data, msg } = await fetchNotifications();
       if (success) {
         setNotifications(data);
+        // Explicit, idempotent: the list has been shown, so clear the unseen badge.
+        markNotificationsSeen();
       } else {
         console.error("Error fetching notifications:", msg);
       }

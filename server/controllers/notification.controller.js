@@ -17,6 +17,12 @@ class NotificationController {
     sendResult(res, result);
   }
 
+  // POST /notifications/mark-seen — for the authenticated user.
+  static async markAllSeen(req, res) {
+    const result = await Notification.markAllSeen(req.user.id);
+    sendResult(res, result);
+  }
+
   // GET /notifications — for the authenticated user.
   static async list(req, res) {
     const result = await Notification.fetchNotifications(req.user.id);
