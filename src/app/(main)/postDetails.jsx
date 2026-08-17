@@ -95,7 +95,7 @@ const PostDetails = () => {
   };
 
   const onDeleteComment = async (comment) => {
-    const { success, msg } = await deleteComment(comment?.id);
+    const { success, msg } = await deleteComment(postId, comment?.id);
     if (success) {
       setPostDetails((prevDetails) => ({
         ...prevDetails,
@@ -178,11 +178,11 @@ const PostDetails = () => {
                   <CommentItem
                     item={comment}
                     key={comment?.id?.toString()}
-                    //   canDelete={
-                    //     comment?.userId === user?.id ||
-                    //     postDetails?.userId === user?.id
-                    //   }
-                    //   onDelete={onDeleteComment}
+                    canDelete={
+                      comment?.userId === user?.id ||
+                      postDetails?.userId === user?.id
+                    }
+                    onDelete={onDeleteComment}
                     highlight={comment?.id == commentId}
                   />
                 ))}
