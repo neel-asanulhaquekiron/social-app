@@ -27,6 +27,18 @@ export const fetchNotifications = async () => {
   }
 };
 
+export const markNotificationsSeen = async () => {
+  try {
+    const res = await authFetch(`${API_BASE_URL}/notifications/mark-seen`, {
+      method: "POST",
+    });
+    return await res.json();
+  } catch (error) {
+    console.error("Error marking notifications as seen via API:", error);
+    return { success: false, msg: error.message || "Something went wrong" };
+  }
+};
+
 export const getUnseenNotificationCount = async () => {
   try {
     const res = await authFetch(`${API_BASE_URL}/notifications/unseen-count`);

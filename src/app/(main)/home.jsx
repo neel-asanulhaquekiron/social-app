@@ -17,8 +17,8 @@ import {
   unsubscribeFromChannel,
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -97,6 +97,14 @@ const Home = () => {
     return () => clearTimeout(timeout);
   }, [usernameFilter]);
 
+  // Re-sync the badge whenever Home regains focus (e.g. back from Notifications,
+  // where the server marked everything seen).
+  useFocusEffect(
+    useCallback(() => {
+      getNotificationCount();
+    }, [user?.id]),
+  );
+
   useEffect(() => {
     const postChannel = subscribeToPosts(setPosts);
     const commentChannel = subscribeToAllComments(setPosts);
@@ -104,8 +112,6 @@ const Home = () => {
       user?.id,
       setNotificationCount,
     );
-
-    getNotificationCount();
 
     return () => {
       unsubscribeFromChannel(postChannel);
