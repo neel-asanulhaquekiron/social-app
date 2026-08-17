@@ -324,10 +324,7 @@ eas build --profile production --platform android
 
 ## 🧪 Testing
 
-```bash
-emails : asanul@gmail.com, haque@gmail.com, kiron@gmail.com
-password (for all): 123456
-```
+Create your own accounts via the app's sign-up screen (or Supabase Auth dashboard) — no shared credentials are published here.
 
 ---
 
