@@ -4,10 +4,18 @@ import {
   getToken,
   registerPushToken,
 } from "@/services/authService";
+import {
+  addNotificationResponseListener,
+  setNotificationHandler,
+} from "@/services/notificationPermissions";
 import { getUserData } from "@/services/userService";
 import { Stack, useFocusEffect, usePathname, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef } from "react";
 import { Alert, BackHandler } from "react-native";
+
+// Must run at module load so foreground notifications are displayed
+// (and the handler is set before any notification arrives).
+setNotificationHandler();
 
 const _layout = () => {
   return (
@@ -74,6 +82,24 @@ const MainLayout = () => {
 
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    let unsubscribe = () => {};
+
+    addNotificationResponseListener((data) => {
+      if (data?.postId) {
+        router.push({
+          pathname: "postDetails",
+          params: { postId: data.postId },
+        });
+      }
+    }).then((fn) => {
+      unsubscribe = fn;
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return <Stack screenOptions={{ headerShown: false }} />;
 };
 
