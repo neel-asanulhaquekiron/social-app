@@ -24,11 +24,38 @@ export const setNotificationHandler = async () => {
   const Notifications = await getNotifications();
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
     }),
   });
+};
+
+/**
+ * Subscribes to notification tap events (app in foreground, background, or
+ * cold-started from a notification) and navigates to the related post.
+ * Returns an unsubscribe function.
+ */
+export const addNotificationResponseListener = async (onResponse) => {
+  if (isExpoGo && Platform.OS === "android") {
+    return () => {};
+  }
+  const Notifications = await getNotifications();
+
+  const subscription = Notifications.addNotificationResponseReceivedListener(
+    (response) => {
+      onResponse(response?.notification?.request?.content?.data ?? {});
+    },
+  );
+
+  // Handle the case where the app was launched by tapping a notification.
+  const lastResponse = await Notifications.getLastNotificationResponseAsync();
+  if (lastResponse) {
+    onResponse(lastResponse?.notification?.request?.content?.data ?? {});
+  }
+
+  return () => subscription.remove();
 };
 
 export const registerForPushNotificationsAsync = async () => {
@@ -46,6 +73,16 @@ export const registerForPushNotificationsAsync = async () => {
 
   const Notifications = await getNotifications();
 
+  // On Android the channel must exist before requesting a token.
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: "#FF231F7C",
+    });
+  }
+
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
@@ -59,17 +96,24 @@ export const registerForPushNotificationsAsync = async () => {
     return null;
   }
 
-  if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.MAX,
-    });
+  const projectId =
+    Constants?.expoConfig?.extra?.eas?.projectId ??
+    Constants?.easConfig?.projectId;
+
+  if (!projectId) {
+    console.error("Missing EAS projectId; cannot get Expo push token");
+    return null;
   }
 
-  const projectId = "65ddd384-8c0b-48f3-9b2e-37ec71acb77a";
-  const tokenResponse = await Notifications.getExpoPushTokenAsync({
-    projectId,
-  });
-
-  return tokenResponse.data;
+  try {
+    const tokenResponse = await Notifications.getExpoPushTokenAsync({
+      projectId,
+    });
+    return tokenResponse.data;
+  } catch (error) {
+    // On Android this typically means google-services.json / FCM is not
+    // configured in the native build.
+    console.error("Error getting Expo push token:", error);
+    return null;
+  }
 };
