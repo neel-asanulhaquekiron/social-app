@@ -92,6 +92,26 @@ class PostController {
         .json({ success: false, msg: error.message || "Something went wrong" });
     }
   }
+
+  static async deleteComment(req, res) {
+    const { postId, commentId } = req.params;
+
+    try {
+      const result = await Post.deleteComment(commentId, postId, req.user.id);
+
+      if (!result.success) {
+        const status = result.notFound ? 404 : result.forbidden ? 403 : 400;
+        return res.status(status).json(result);
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res
+        .status(500)
+        .json({ success: false, msg: error.message || "Something went wrong" });
+    }
+  }
 }
 
 module.exports = PostController;

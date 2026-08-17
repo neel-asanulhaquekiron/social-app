@@ -92,17 +92,14 @@ export const createComment = async (comment) => {
   }
 };
 
-export const deleteComment = async (commentId) => {
+export const deleteComment = async (postId, commentId) => {
   try {
-    const res = await fetch(`${API_BASE_URL}/posts/comment/${commentId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const res = await authFetch(
+      `${API_BASE_URL}/posts/${postId}/comment/${commentId}`,
+      { method: "DELETE" },
+    );
 
-    const result = await res.json();
-    return result;
+    return await res.json();
   } catch (error) {
     console.error("Error deleting comment via API:", error);
     return { success: false, msg: error.message || "Something went wrong" };
