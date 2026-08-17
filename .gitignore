@@ -31,9 +31,10 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# local env files (never commit real values; see .env.example)
 .env
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -47,4 +48,3 @@ example
 # google-services.json is intentionally committed (public identifiers only);
 # the Firebase *service account* key must never be committed.
 *firebase-adminsdk*.json
-.env
