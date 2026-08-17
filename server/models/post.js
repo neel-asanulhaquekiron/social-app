@@ -1,4 +1,3 @@
-const PushNotificationService = require("../utils/pushNotifications.js");
 const supabase = require("../config/db.js");
 const { ok, fail, dbError } = require("../utils/result");
 
@@ -84,29 +83,6 @@ class Post {
         return dbError("creating post like", error);
       }
 
-      const { data: post } = await supabase
-        .from("posts")
-        .select("userId")
-        .eq("id", postLike.postId)
-        .single();
-
-      if (post && post.userId !== postLike.userId) {
-        const { data: owner } = await supabase
-          .from("users")
-          .select("pushToken, name")
-          .eq("id", post.userId)
-          .single();
-
-        if (owner?.pushToken) {
-          await PushNotificationService.sendPushNotification(
-            owner.pushToken,
-            "New Like",
-            "Someone liked your post",
-            { postId: postLike.postId },
-          );
-        }
-      }
-
       return ok({ data });
     } catch (error) {
       return dbError("creating post like", error);
@@ -141,29 +117,6 @@ class Post {
 
       if (error) {
         return dbError("creating comment", error);
-      }
-
-      const { data: post } = await supabase
-        .from("posts")
-        .select("userId")
-        .eq("id", comment.postId)
-        .single();
-
-      if (post && post.userId !== comment.userId) {
-        const { data: owner } = await supabase
-          .from("users")
-          .select("pushToken, name")
-          .eq("id", post.userId)
-          .single();
-
-        if (owner?.pushToken) {
-          await PushNotificationService.sendPushNotification(
-            owner.pushToken,
-            "New Comment",
-            "Someone commented on your post",
-            { postId: comment.postId },
-          );
-        }
       }
 
       return ok({ data });

@@ -1,5 +1,6 @@
 const Post = require("../models/post.js");
 const { sendResult } = require("../utils/result");
+const { notifyPostOwner, enqueue } = require("../services/notificationService");
 
 // All handlers are wrapped with asyncHandler in the router, so thrown errors
 // reach the JSON error handler; models return { success, ... } objects that
@@ -26,10 +27,13 @@ class PostController {
   }
 
   static async createPostLike(req, res) {
-    const result = await Post.createPostLike({
-      postId: req.params.postId,
-      userId: req.user.id,
-    });
+    const { postId } = req.params;
+    const result = await Post.createPostLike({ postId, userId: req.user.id });
+
+    if (result.success) {
+      // Off the request path: in-app notification row + push to the post owner.
+      enqueue(() => notifyPostOwner({ type: "like", postId, actorId: req.user.id }));
+    }
     sendResult(res, result, 201);
   }
 
@@ -39,11 +43,23 @@ class PostController {
   }
 
   static async createComment(req, res) {
+    const { postId } = req.params;
     const result = await Post.createComment({
       text: req.body.text,
-      postId: req.params.postId,
+      postId,
       userId: req.user.id,
     });
+
+    if (result.success) {
+      enqueue(() =>
+        notifyPostOwner({
+          type: "comment",
+          postId,
+          actorId: req.user.id,
+          commentId: result.data?.id,
+        }),
+      );
+    }
     sendResult(res, result, 201);
   }
 
