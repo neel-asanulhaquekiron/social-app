@@ -1,4 +1,5 @@
 const { Expo } = require("expo-server-sdk");
+const supabase = require("../config/db.js");
 
 const expo = new Expo();
 
@@ -15,11 +16,26 @@ class PushNotificationService {
       title,
       body,
       data,
+      channelId: "default",
     };
 
     try {
-      const receipts = await expo.sendPushNotificationsAsync([message]);
-      console.log("Push notification sent:", receipts);
+      const tickets = await expo.sendPushNotificationsAsync([message]);
+
+      for (const ticket of tickets) {
+        if (ticket.status === "error") {
+          console.error(
+            `Push ticket error (${ticket.details?.error || "unknown"}): ${ticket.message}`,
+          );
+
+          if (ticket.details?.error === "DeviceNotRegistered") {
+            await supabase
+              .from("users")
+              .update({ pushToken: null })
+              .eq("pushToken", pushToken);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error sending push notification:", error);
     }
