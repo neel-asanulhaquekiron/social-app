@@ -6,8 +6,7 @@ class UserValidator {
   });
 
   static registerPushTokenSchema = z.object({
-    userId: z.string().uuid(),
-    pushToken: z.string().min(1),
+    pushToken: z.string().min(1).max(512),
   });
 }
 
