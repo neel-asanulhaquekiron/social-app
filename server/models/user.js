@@ -19,17 +19,25 @@ class User {
     }
   }
 
-  static async getUserData(userId) {
+  static PUBLIC_COLUMNS = "id, name, created_at";
+  static PRIVATE_COLUMNS = "id, name, email, created_at";
+
+  // Never return pushToken; email only for the owner (includePrivate).
+  static async getUserData(userId, { includePrivate = false } = {}) {
     try {
       const { data, error } = await supabase
         .from("users")
-        .select()
+        .select(includePrivate ? User.PRIVATE_COLUMNS : User.PUBLIC_COLUMNS)
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching user data:", error);
         return { success: false, msg: error.message };
+      }
+
+      if (!data) {
+        return { success: false, notFound: true, msg: "User not found" };
       }
 
       return { success: true, data };

@@ -38,7 +38,7 @@ const SignUp = () => {
 
     if (result.success) {
       setAuth(result.user);
-      registerPushToken(result.user.id);
+      registerPushToken();
       router.replace("/home");
     } else {
       Alert.alert("Sign Up Failed", result.msg || "Something went wrong");
