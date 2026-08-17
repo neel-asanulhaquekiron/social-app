@@ -47,7 +47,6 @@ const notifyPostOwner = async ({ type, postId, actorId, commentId }) => {
     if (post.owner.id === actorId) return; // no self-notifications
 
     const data = template.data({ postId, commentId });
-    const dataString = JSON.stringify(data);
 
     // A like can be toggled repeatedly; only notify the first time.
     if (type === "like") {
@@ -57,7 +56,7 @@ const notifyPostOwner = async ({ type, postId, actorId, commentId }) => {
         .eq("senderId", actorId)
         .eq("receiverId", post.owner.id)
         .eq("title", template.title)
-        .eq("data", dataString);
+        .eq("data->>postId", String(postId));
       if (count > 0) return;
     }
 
@@ -67,9 +66,7 @@ const notifyPostOwner = async ({ type, postId, actorId, commentId }) => {
         senderId: actorId,
         receiverId: post.owner.id,
         title: template.title,
-        data: dataString,
-        isSeen: false,
-        isClicked: false,
+        data, // jsonb
       })
       .select("id")
       .single();
