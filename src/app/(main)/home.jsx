@@ -106,7 +106,12 @@ const Home = () => {
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
           onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5}
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={9}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews
           ListFooterComponent={renderFooter}
           renderItem={renderItem}
         />

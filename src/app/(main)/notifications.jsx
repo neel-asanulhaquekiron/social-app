@@ -95,7 +95,12 @@ const Notifications = () => {
           showsVerticalScrollIndicator={false}
           refreshing={isRefetching}
           onRefresh={refetch}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5}
+          initialNumToRender={12}
+          maxToRenderPerBatch={12}
+          windowSize={9}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews
           onEndReached={() => {
             if (hasNextPage && !isFetchingNextPage) {
               fetchNextPage();
