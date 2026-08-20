@@ -8,13 +8,16 @@ import { signup } from "@/services/authService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 const SignUp = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
+  const confirmRef = useRef(null);
 
   const {
     control,
@@ -42,7 +45,7 @@ const SignUp = () => {
   };
 
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <StatusBar style="dark" />
       <View style={styles.container}>
         <View>
@@ -61,6 +64,13 @@ const SignUp = () => {
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
                   placeholder="Enter your name"
+                  textContentType="name"
+                  autoComplete="name"
+                  maxLength={50}
+                  returnKeyType="next"
+                  onSubmitEditing={() => emailRef.current?.focus()}
+                  submitBehavior="submit"
+                  accessibilityLabel="Name"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -78,9 +88,17 @@ const SignUp = () => {
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
+                  ref={emailRef}
                   placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="username"
+                  autoComplete="email"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  submitBehavior="submit"
+                  accessibilityLabel="Email"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -98,8 +116,15 @@ const SignUp = () => {
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
+                  ref={passwordRef}
                   placeholder="Enter your password"
                   secureTextEntry
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                  returnKeyType="next"
+                  onSubmitEditing={() => confirmRef.current?.focus()}
+                  submitBehavior="submit"
+                  accessibilityLabel="Password"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -117,8 +142,14 @@ const SignUp = () => {
               name="confirmPassword"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
+                  ref={confirmRef}
                   placeholder="Confirm your password"
                   secureTextEntry
+                  textContentType="newPassword"
+                  autoComplete="new-password"
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                  accessibilityLabel="Confirm password"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -145,7 +176,7 @@ const SignUp = () => {
                 styles.footerText,
                 {
                   color: theme.colors.primaryDark,
-                  fontWeight: theme.fonts.semibold,
+                  fontWeight: theme.fonts.semiBold,
                 },
               ]}
             >
@@ -174,7 +205,12 @@ const styles = StyleSheet.create({
   },
   subtitle: { fontSize: hp(2), color: theme.colors.textLight },
   form: { gap: 18 },
-  error: { color: "red", fontSize: hp(2), marginTop: 4, marginLeft: 4 },
+  error: {
+    color: theme.colors.error,
+    fontSize: hp(2),
+    marginTop: 4,
+    marginLeft: 4,
+  },
   footer: {
     flexDirection: "row",
     justifyContent: "center",

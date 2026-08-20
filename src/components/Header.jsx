@@ -44,7 +44,11 @@ const Header = ({
         </Pressable>
       )}
 
-      {title && <Text style={styles.title}>{title}</Text>}
+      {title && (
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+      )}
 
       {showLogOutButton && (
         <Pressable onPress={handleLogOutPress} style={styles.logoutButton}>
@@ -72,7 +76,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     padding: 5,
-    borderRadius: theme.radius?.sm ?? 8,
+    borderRadius: theme.radius.sm,
     backgroundColor: "rgba(0,0,0,0.05)",
     zIndex: 10,
   },
@@ -80,11 +84,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     padding: 5,
-    borderRadius: theme.radius?.sm ?? 8,
-    backgroundColor: "#ffe8e8",
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.errorSurface,
     zIndex: 10,
   },
   title: {
+    // The back and logout buttons are absolutely positioned, so reserve room
+    // for them; without this a long title ran underneath.
+    paddingHorizontal: hp(5),
     fontSize: hp(2.7),
     fontWeight: theme.fonts.bold,
     color: theme.colors.text,

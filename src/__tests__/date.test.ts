@@ -1,12 +1,25 @@
 import { formatShortDate } from "@/helpers/date";
 
 describe("formatShortDate", () => {
-  it("formats an ISO timestamp as 'MMM D'", () => {
-    expect(formatShortDate("2026-08-20T08:05:43.123456+00:00")).toBe("Aug 20");
+  const now = new Date("2026-08-20T00:00:00Z");
+
+  it("formats a same-year timestamp without the year", () => {
+    expect(formatShortDate("2026-08-20T08:05:43.123456+00:00", now)).toBe(
+      "Aug 20",
+    );
+  });
+
+  it("includes the year for a different year", () => {
+    // A bare "Aug 20" on a two-year-old post reads as recent.
+    expect(formatShortDate("2024-08-20T08:05:43.123456+00:00", now)).toBe(
+      "Aug 20, 2024",
+    );
   });
 
   it("accepts a Date", () => {
-    expect(formatShortDate(new Date("2026-12-25T12:00:00Z"))).toBe("Dec 25");
+    expect(formatShortDate(new Date("2026-12-25T12:00:00Z"), now)).toBe(
+      "Dec 25",
+    );
   });
 
   it.each([

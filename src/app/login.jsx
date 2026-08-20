@@ -8,13 +8,14 @@ import { login } from "@/services/authService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 const Login = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const passwordRef = useRef(null);
 
   const {
     control,
@@ -43,7 +44,7 @@ const Login = () => {
   };
 
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <StatusBar style="dark" />
       <View style={styles.container}>
         {/* welcome */}
@@ -63,6 +64,13 @@ const Login = () => {
                   placeholder="Enter your email"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoCorrect={false}
+                  textContentType="username"
+                  autoComplete="email"
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  submitBehavior="submit"
+                  accessibilityLabel="Email"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -80,8 +88,14 @@ const Login = () => {
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
+                  ref={passwordRef}
                   placeholder="Enter your password"
                   secureTextEntry
+                  textContentType="password"
+                  autoComplete="current-password"
+                  returnKeyType="go"
+                  onSubmitEditing={handleSubmit(onSubmit)}
+                  accessibilityLabel="Password"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -108,7 +122,7 @@ const Login = () => {
                 styles.footerText,
                 {
                   color: theme.colors.primaryDark,
-                  fontWeight: theme.fonts.semibold,
+                  fontWeight: theme.fonts.semiBold,
                 },
               ]}
             >
@@ -143,7 +157,7 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   error: {
-    color: "red",
+    color: theme.colors.error,
     fontSize: hp(2),
     marginTop: 4,
     marginLeft: 4,

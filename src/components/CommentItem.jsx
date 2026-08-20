@@ -10,6 +10,7 @@ const CommentItem = ({
   canDelete = false,
   onDelete,
   highlight = false,
+  onLayout,
 }) => {
   const createdAt = formatShortDate(item?.created_at);
 
@@ -25,7 +26,7 @@ const CommentItem = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onLayout}>
       <Avatar size={hp(4)} color={theme.colors.textLight} />
       <View style={[styles.bubble, highlight && styles.highlight]}>
         <View style={styles.header}>
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
   },
   highlight: {
     borderWidth: 1,
-    backgroundColor: "white",
+    backgroundColor: theme.colors.surface,
     borderColor: theme.colors.dark,
     shadowColor: theme.colors.dark,
     shadowOffset: {
@@ -69,8 +70,8 @@ const styles = StyleSheet.create({
   },
   bubble: {
     flex: 1,
-    backgroundColor: theme.colors?.gray ?? "#f2f2f2",
-    borderRadius: theme.radius?.md ?? 12,
+    backgroundColor: theme.colors.gray,
+    borderRadius: theme.radius.md,
     paddingHorizontal: 12,
     paddingVertical: 8,
     gap: 2,
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: hp(1.7),
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.semiBold,
     color: theme.colors.text,
   },
   time: {
