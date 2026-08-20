@@ -2,6 +2,7 @@ import HomeHeader from "@/components/HomeHeader";
 import { ListState } from "@/components/ListStates";
 import Input from "@/components/Input";
 import PostCard from "@/components/PostCard";
+import PushPermissionPrompt from "@/components/PushPermissionPrompt";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
@@ -71,6 +72,8 @@ const Home = () => {
           showFilter={showFilter}
           onToggleFilter={toggleFilter}
         />
+
+        <PushPermissionPrompt />
 
         {showFilter && (
           <View style={styles.filterContainer}>

@@ -166,10 +166,20 @@ export const getStoredUser = async (): Promise<AuthUser | null> => {
   return data?.session?.user ? toAuthUser(data.session.user) : null;
 };
 
-// The server binds the push token to the authenticated user (from the JWT).
-export const registerPushToken = async (): Promise<void> => {
+/**
+ * The server binds the push token to the authenticated user (from the JWT).
+ *
+ * Silent by default — it registers only if permission is already granted, so
+ * launching the app never triggers the OS dialog. `promptIfNeeded` is passed
+ * by the in-app explainer.
+ */
+export const registerPushToken = async ({
+  promptIfNeeded = false,
+}: { promptIfNeeded?: boolean } = {}): Promise<void> => {
   try {
-    const pushToken = await registerForPushNotificationsAsync();
+    const pushToken = await registerForPushNotificationsAsync({
+      promptIfNeeded,
+    });
     if (!pushToken) {
       return;
     }
