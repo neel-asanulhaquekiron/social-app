@@ -23,18 +23,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let cancelled = false;
 
-    // Realtime must be carrying the user's JWT *before* any guarded screen
-    // mounts and subscribes: postgres_changes on the authenticated-only
-    // tables (notifications, comments, postLikes) silently deliver nothing to
-    // a channel that was opened while the socket still had the anon key.
-    // Passing the token explicitly keeps this off the auth lock.
-    const applySession = async (session: Session | null | undefined) => {
-      try {
-        await supabase.realtime.setAuth(session?.access_token ?? null);
-      } catch (error) {
-        console.error("Error applying realtime auth:", error);
-      }
-
+    // Deliberately synchronous, and deliberately does NOT touch
+    // supabase.realtime.setAuth().
+    //
+    // This runs inside onAuthStateChange, which supabase-js dispatches while
+    // holding the auth lock. realtime.setAuth(null) treats a null token as
+    // "go and fetch one" and calls the accessToken callback -> auth.getSession()
+    // -> which waits on that same lock. The await never resolved, so on sign-out
+    // setUser(null) never ran and the app stayed on the authed screens: logout
+    // looked like it did nothing.
+    //
+    // The setAuth call was only ever defensive (see #32, where the race it
+    // guarded against did not reproduce). supabase-js already pushes the token
+    // to realtime on SIGNED_IN / TOKEN_REFRESHED / INITIAL_SESSION, so nothing
+    // is lost by removing it.
+    const applySession = (session: Session | null | undefined) => {
       if (cancelled) return;
       setUser(session?.user ? toAuthUser(session.user) : null);
       setIsReady(true);

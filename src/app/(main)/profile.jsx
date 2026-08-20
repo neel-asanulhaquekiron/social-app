@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
-import { getPushPermissionStatus } from "@/services/notificationPermissions";
+import { getPushPermission } from "@/services/notificationPermissions";
 import { handleLogOut } from "@/utils/logOut";
 import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useEffect, useState } from "react";
@@ -62,8 +62,17 @@ const NotificationSetting = () => {
 
   useEffect(() => {
     let cancelled = false;
-    getPushPermissionStatus().then((value) => {
-      if (!cancelled) setStatus(value);
+    getPushPermission().then((permission) => {
+      // Only surface this where push is actually possible and the OS dialog is
+      // no longer available — i.e. settings is genuinely the only way back.
+      if (cancelled) return;
+      setStatus(
+        !permission.unsupported &&
+          permission.status !== "granted" &&
+          !permission.canAskAgain
+          ? "denied"
+          : permission.status,
+      );
     });
     return () => {
       cancelled = true;

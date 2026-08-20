@@ -34,15 +34,41 @@ const getNotifications = async (): Promise<NotificationsModule> => {
 
 export type PushPermissionStatus = "granted" | "denied" | "undetermined";
 
-/** Reads the current status without ever showing the OS dialog. */
-export const getPushPermissionStatus =
-  async (): Promise<PushPermissionStatus> => {
-    if (isExpoGoAndroid || !Device.isDevice) return "denied";
+export type PushPermission = {
+  status: PushPermissionStatus;
+  /** False once the OS will no longer show the dialog — settings is the only way back. */
+  canAskAgain: boolean;
+  /** True when this device cannot do push at all (emulator, Expo Go on Android). */
+  unsupported: boolean;
+};
 
-    const Notifications = await getNotifications();
-    const { status } = await Notifications.getPermissionsAsync();
-    return status as PushPermissionStatus;
+/**
+ * Reads the current permission without ever showing the OS dialog.
+ *
+ * `canAskAgain` matters more than `status` here. On Android, getPermissionsAsync
+ * never reports "undetermined": pre-13 it is "granted", and on 13+ it is
+ * "denied" from the very first launch because POST_NOTIFICATIONS starts
+ * ungranted. Keying the explainer off "undetermined" therefore meant it never
+ * appeared on Android at all.
+ */
+export const getPushPermission = async (): Promise<PushPermission> => {
+  if (isExpoGoAndroid || !Device.isDevice) {
+    return { status: "denied", canAskAgain: false, unsupported: true };
+  }
+
+  const Notifications = await getNotifications();
+  const { status, canAskAgain } = await Notifications.getPermissionsAsync();
+
+  return {
+    status: status as PushPermissionStatus,
+    canAskAgain: !!canAskAgain,
+    unsupported: false,
   };
+};
+
+/** Convenience wrapper for callers that only care about the status. */
+export const getPushPermissionStatus =
+  async (): Promise<PushPermissionStatus> => (await getPushPermission()).status;
 
 /**
  * Shows the OS dialog. iOS only ever shows it once per install, so this must
