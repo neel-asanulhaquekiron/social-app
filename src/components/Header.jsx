@@ -1,8 +1,8 @@
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 const Header = ({
   title,
@@ -11,6 +11,8 @@ const Header = ({
   showLogOutButton = false,
   onLogOut,
 }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const router = useRouter();
 
   const handleLogOutPress = () => {
@@ -35,7 +37,13 @@ const Header = ({
   return (
     <View style={[styles.container, { marginBottom: mb }]}>
       {showBackButton && (
-        <Pressable onPress={handleBackPress} style={styles.backButton}>
+        <Pressable
+          onPress={handleBackPress}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={12}
+        >
           <Ionicons
             name="chevron-back-outline"
             size={hp(3.2)}
@@ -51,7 +59,13 @@ const Header = ({
       )}
 
       {showLogOutButton && (
-        <Pressable onPress={handleLogOutPress} style={styles.logoutButton}>
+        <Pressable
+          onPress={handleLogOutPress}
+          style={styles.logoutButton}
+          accessibilityRole="button"
+          accessibilityLabel="Log out"
+          hitSlop={12}
+        >
           <Ionicons
             name="log-out-outline"
             size={hp(3.2)}
@@ -65,7 +79,7 @@ const Header = ({
 
 export default Header;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -98,4 +112,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
     flex: 1,
   },
-});
+}));

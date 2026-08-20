@@ -2,24 +2,19 @@ import Avatar from "@/components/Avatar";
 import Button from "@/components/Button";
 import Header from "@/components/Header";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { queryKeys } from "@/lib/queryClient";
 import { createPost } from "@/services/postService";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, ScrollView, Text, TextInput, View } from "react-native";
 
 const NewPost = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -100,7 +95,7 @@ const NewPost = () => {
 
 export default NewPost;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     paddingHorizontal: wp(4),
@@ -137,6 +132,6 @@ const styles = StyleSheet.create({
     maxHeight: hp(38),
   },
   button: {
-    height: hp(6.2),
+    minHeight: hp(6.2),
   },
-});
+}));

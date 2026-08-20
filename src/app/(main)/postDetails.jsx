@@ -5,12 +5,12 @@ import { ErrorState, ListState, LoadingState } from "@/components/ListStates";
 import Loading from "@/components/Loading";
 import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
 import { patchCommentCount } from "@/lib/postCache";
 import { unsubscribeFromChannel } from "@/lib/supabase";
 import { queryKeys, unwrap } from "@/lib/queryClient";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import {
   createComment,
   deleteComment,
@@ -28,18 +28,13 @@ import {
 } from "@tanstack/react-query";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 const COMMENTS_PAGE_SIZE = 20;
 
 const PostDetails = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const { postId, commentId } = useLocalSearchParams();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -212,7 +207,13 @@ const PostDetails = () => {
                   <Loading size="small" />
                 </View>
               ) : (
-                <Pressable style={styles.sendIcon} onPress={onNewComment}>
+                <Pressable
+                  style={styles.sendIcon}
+                  onPress={onNewComment}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send comment"
+                  hitSlop={8}
+                >
                   <Ionicons
                     name="send"
                     size={hp(2.4)}
@@ -256,6 +257,9 @@ const PostDetails = () => {
                 <Pressable
                   onPress={() => !isFetchingNextPage && fetchNextPage()}
                   style={styles.loadMoreButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Load more comments"
+                  hitSlop={8}
                 >
                   {isFetchingNextPage ? (
                     <Loading size="small" />
@@ -274,7 +278,7 @@ const PostDetails = () => {
 
 export default PostDetails;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -297,7 +301,7 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     flex: 1,
-    height: hp(6.2),
+    minHeight: hp(6.2),
   },
   commentList: {
     gap: 20,
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.semiBold,
   },
   sendIcon: {
-    height: hp(5.8),
+    minHeight: hp(5.8),
     width: hp(5.8),
     justifyContent: "center",
     alignItems: "center",
@@ -335,4 +339,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.gray,
   },
-});
+}));

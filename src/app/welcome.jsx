@@ -1,16 +1,18 @@
 import Button from "@/components/Button";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 const Welcome = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const router = useRouter();
   return (
     <ScreenWrapper bg={theme.colors.background}>
-      <StatusBar style="dark" />
+      <StatusBar style="auto" />
       <View style={styles.container}>
         {/* title */}
         <View style={{ gap: 20 }}>
@@ -54,7 +56,7 @@ const Welcome = () => {
 
 export default Welcome;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     justifyContent: "center",
@@ -90,4 +92,4 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: hp(1.6),
   },
-});
+}));
