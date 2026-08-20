@@ -1,25 +1,22 @@
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
-import { patchLike } from "@/lib/postCache";
-import { queryKeys } from "@/lib/queryClient";
-import { createPostLike, removePostLike } from "@/services/postService";
+import { useLike } from "@/hooks/useLike";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import moment from "moment";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Avatar from "./Avatar";
 
 const MAX_LINES = 6;
 
-const PostCard = ({
-  item,
-  currentUser,
-  router,
-  hasShadow = true,
-  disableDetailsNavigation = false,
-}) => {
-  const queryClient = useQueryClient();
+/**
+ * Presentational post row. Navigation and the like mutation come from hooks
+ * used in place, so nothing has to be drilled down from the list screens.
+ */
+const PostCard = ({ item, hasShadow = true, disableDetailsNavigation = false }) => {
+  const router = useRouter();
+  const { toggleLike, isPending: likePending } = useLike(item?.id);
   const [expanded, setExpanded] = useState(false);
   const [showSeeMore, setShowSeeMore] = useState(false);
 
@@ -27,25 +24,6 @@ const PostCard = ({
   const likeCount = item?.likeCount ?? 0;
   const commentCount = item?.commentCount ?? 0;
   const createdAt = moment(item?.created_at).format("MMM D");
-
-  const { mutate: toggleLike, isPending: likePending } = useMutation({
-    mutationFn: (nextLiked) =>
-      nextLiked ? createPostLike(item?.id) : removePostLike(item?.id),
-    onMutate: async (nextLiked) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.post(item?.id) });
-      patchLike(queryClient, item?.id, nextLiked);
-      return { previousLiked: liked };
-    },
-    onError: (error, _nextLiked, context) => {
-      // Roll the optimistic update back.
-      patchLike(queryClient, item?.id, context?.previousLiked ?? liked);
-      console.error("Error liking/unliking post:", error.message);
-    },
-    onSuccess: () => {
-      // The server also creates the owner's notification + push after a like.
-      queryClient.invalidateQueries({ queryKey: queryKeys.post(item?.id) });
-    },
-  });
 
   const openPostDetails = () => {
     if (!disableDetailsNavigation) {
@@ -134,6 +112,9 @@ const PostCard = ({
           <TouchableOpacity
             disabled={disableDetailsNavigation}
             onPress={openPostDetails}
+            accessibilityRole="button"
+            accessibilityLabel={`${commentCount} comments`}
+            hitSlop={8}
           >
             <Ionicons
               name="chatbubble-outline"
@@ -148,7 +129,8 @@ const PostCard = ({
   );
 };
 
-export default PostCard;
+// Rows only re-render when their own post object changes identity.
+export default memo(PostCard);
 
 const styles = StyleSheet.create({
   container: {
