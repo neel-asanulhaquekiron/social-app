@@ -1,110 +1,28 @@
-import { API_BASE_URL } from "@/constants";
 import { channelStatusLogger, supabase } from "@/lib/supabase";
-import { authFetch } from "./apiClient";
+import { api } from "./apiClient";
 import { getUserData } from "./userService";
 
-export const createOrUpdatePost = async (postData) => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/posts`, {
-      method: "POST",
-      body: JSON.stringify(postData),
-    });
+export const createOrUpdatePost = (postData) => api.post("/posts", postData);
 
-    return await res.json();
-  } catch (error) {
-    console.error("Error creating/updating post via API:", error);
-    return {
-      success: false,
-      msg: error.message || "Something went wrong",
-    };
+export const fetchPosts = (limit = 10, userName = null) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (userName) {
+    params.append("username", userName);
   }
+  return api.get(`/posts/?${params.toString()}`);
 };
 
-export const fetchPosts = async (limit = 10, userName = null) => {
-  try {
-    const params = new URLSearchParams({ limit });
-    if (userName) {
-      params.append("username", userName);
-    }
-    const res = await fetch(`${API_BASE_URL}/posts/?${params.toString()}`);
-    const result = await res.json();
-    return result;
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const fetchPostById = (postId) => api.get(`/posts/${postId}`);
 
-export const fetchPostById = async (postId) => {
-  try {
-    const res = await fetch(`${API_BASE_URL}/posts/${postId}`);
-    const result = await res.json();
-    return result;
-  } catch (error) {
-    console.error("Error fetching post by ID via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const createPostLike = (postId) => api.post(`/posts/${postId}/like`);
 
-export const createPostLike = async (postId) => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/posts/${postId}/like`, {
-      method: "POST",
-    });
+export const removePostLike = (postId) => api.delete(`/posts/${postId}/like`);
 
-    return await res.json();
-  } catch (error) {
-    console.error("Error creating post like via API:", error);
-    return {
-      success: false,
-      msg: error.message || "Something went wrong",
-    };
-  }
-};
+export const createComment = (comment) =>
+  api.post(`/posts/${comment.postId}/comment`, comment);
 
-export const removePostLike = async (postId) => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/posts/${postId}/like`, {
-      method: "DELETE",
-    });
-
-    return await res.json();
-  } catch (error) {
-    console.error("Error removing post like via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
-
-export const createComment = async (comment) => {
-  try {
-    const res = await authFetch(
-      `${API_BASE_URL}/posts/${comment.postId}/comment`,
-      {
-        method: "POST",
-        body: JSON.stringify(comment),
-      },
-    );
-
-    return await res.json();
-  } catch (error) {
-    console.error("Error creating comment via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
-
-export const deleteComment = async (postId, commentId) => {
-  try {
-    const res = await authFetch(
-      `${API_BASE_URL}/posts/${postId}/comment/${commentId}`,
-      { method: "DELETE" },
-    );
-
-    return await res.json();
-  } catch (error) {
-    console.error("Error deleting comment via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const deleteComment = (postId, commentId) =>
+  api.delete(`/posts/${postId}/comment/${commentId}`);
 
 const getPostsChannelHandler = (setPosts) => {
   return async (payload) => {

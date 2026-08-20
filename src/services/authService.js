@@ -1,11 +1,10 @@
-import { API_BASE_URL } from "@/constants";
 import { supabase } from "@/lib/supabase";
 import {
   clearNotificationBadge,
   registerForPushNotificationsAsync,
 } from "@/services/notificationPermissions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { authFetch } from "./apiClient";
+import { api } from "./apiClient";
 
 // Shape the app uses everywhere: { id, email, name }.
 export const toAuthUser = (authUser) => ({
@@ -94,17 +93,7 @@ export const login = async ({ email, password }) => {
   }
 };
 
-export const unregisterPushToken = async () => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/users/pushToken`, {
-      method: "DELETE",
-    });
-    return await res.json();
-  } catch (error) {
-    console.error("Error unregistering push token:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const unregisterPushToken = () => api.delete("/users/pushToken");
 
 // Full teardown: stop pushes for this device, drop realtime channels, clear
 // the badge, then end the Supabase session. Best-effort — always ends signed out.
@@ -155,20 +144,7 @@ export const registerPushToken = async () => {
       return;
     }
 
-    const res = await authFetch(`${API_BASE_URL}/users/registerPushToken`, {
-      method: "POST",
-      body: JSON.stringify({ pushToken }),
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      console.error(
-        `Error registering push token: HTTP ${res.status} ${text.slice(0, 200)}`,
-      );
-      return;
-    }
-
-    const result = await res.json();
+    const result = await api.post("/users/registerPushToken", { pushToken });
     if (!result.success) {
       console.error("Error registering push token:", result.msg);
     }
