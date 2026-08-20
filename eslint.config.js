@@ -43,7 +43,7 @@ module.exports = defineConfig([
         afterEach: "readonly",
         beforeAll: "readonly",
         afterAll: "readonly",
-        global: "writable",
+        globalThis: "writable",
       },
     },
   },
