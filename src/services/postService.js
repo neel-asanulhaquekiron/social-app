@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/constants";
-import { supabase } from "@/lib/supabase";
+import { channelStatusLogger, supabase } from "@/lib/supabase";
 import { authFetch } from "./apiClient";
 import { getUserData } from "./userService";
 
@@ -132,7 +132,7 @@ export const subscribeToPosts = (setPosts) => {
       { event: "*", schema: "public", table: "posts" },
       getPostsChannelHandler(setPosts),
     )
-    .subscribe();
+    .subscribe(channelStatusLogger("posts"));
 
   return channel;
 };
@@ -167,7 +167,7 @@ export const subscribeToComments = (postId, setPostDetails) => {
         }
       },
     )
-    .subscribe();
+    .subscribe(channelStatusLogger(`comments:${postId}`));
 
   return channel;
 };
@@ -214,7 +214,7 @@ export const subscribeToAllComments = (setPosts) => {
         );
       },
     )
-    .subscribe();
+    .subscribe(channelStatusLogger("comments"));
 
   return channel;
 };
