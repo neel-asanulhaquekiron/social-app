@@ -4,74 +4,119 @@ import NotificationItem from "@/components/NotificationItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
+import { queryKeys, unwrap } from "@/lib/queryClient";
 import {
   fetchNotifications,
   markNotificationsSeen,
 } from "@/services/notificationServices";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+
+const PAGE_SIZE = 20;
 
 const Notifications = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const getNotifications = async () => {
-    if (!user?.id) {
-      return;
-    }
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.notifications,
+    queryFn: async ({ pageParam }) => {
+      const result = unwrap(
+        await fetchNotifications({ limit: PAGE_SIZE, cursor: pageParam }),
+      );
+      return { data: result.data ?? [], nextCursor: result.nextCursor ?? null };
+    },
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: !!user?.id,
+  });
 
-    setIsLoading(true);
-    try {
-      const { success, data, msg } = await fetchNotifications();
-      if (success) {
-        setNotifications(data);
-        // Explicit, idempotent: the list has been shown, so clear the unseen badge.
-        markNotificationsSeen();
-      } else {
-        console.error("Error fetching notifications:", msg);
-      }
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const notifications = data?.pages.flatMap((page) => page.data) ?? [];
+
+  const { mutate: markSeen } = useMutation({
+    mutationFn: markNotificationsSeen,
+    // The list has been shown, so the badge must clear even if the user
+    // leaves immediately.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.unseenCount }),
+  });
 
   useEffect(() => {
-    getNotifications();
-  }, []);
+    if (!isLoading && !isError && notifications.length > 0) {
+      markSeen();
+    }
+    // Only re-run when the first load finishes; markSeen is idempotent.
+  }, [isLoading, isError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const renderFooter = () => {
+    if (isLoading || isFetchingNextPage) {
+      return <Loading />;
+    }
+
+    if (isError) {
+      return (
+        <Text style={styles.noNotificationsText}>
+          {error?.message || "Could not load notifications"}
+        </Text>
+      );
+    }
+
+    if (notifications.length === 0) {
+      return (
+        <Text style={styles.noNotificationsText}>No notifications found.</Text>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
         <Header title="Notifications" />
-        <ScrollView
-          showsVerticalScrollIndicator={false}
+
+        {/* Virtualised: the list used to render every notification inside a
+            ScrollView, which mounts all of them at once. */}
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.scrollContainer}
-        >
-          {notifications.map((notification) => {
-            return (
-              <NotificationItem
-                item={notification}
-                key={notification?.id}
-                router={router}
-                setNotifications={setNotifications}
-              />
-            );
-          })}
-          {isLoading && <Loading />}
-          {notifications.length === 0 && !isLoading && (
-            <Text style={styles.noNotificationsText}>
-              No notifications found.
-            </Text>
+          showsVerticalScrollIndicator={false}
+          refreshing={isRefetching}
+          onRefresh={refetch}
+          onEndReachedThreshold={0.3}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          ListFooterComponent={renderFooter}
+          renderItem={({ item }) => (
+            <NotificationItem item={item} router={router} />
           )}
-        </ScrollView>
+        />
       </View>
     </ScreenWrapper>
   );
 };
+
 export default Notifications;
 
 const styles = StyleSheet.create({

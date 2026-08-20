@@ -16,13 +16,33 @@ class PostController {
 
   static async fetchPosts(req, res) {
     // Coerced values live on req.validated.query (req.query is read-only in Express 5).
-    const { limit = 10, username = null } = req.validated?.query ?? {};
-    const result = await Post.fetchPosts(limit, username);
+    const {
+      limit = 10,
+      cursor = null,
+      username = null,
+    } = req.validated?.query ?? {};
+
+    const result = await Post.fetchPosts({
+      limit,
+      cursor,
+      userName: username,
+      // These routes are public; `likedByMe` is simply false when signed out.
+      viewerId: req.user?.id ?? null,
+    });
     sendResult(res, result);
   }
 
   static async fetchPostById(req, res) {
-    const result = await Post.fetchPostById(req.params.postId);
+    const result = await Post.fetchPostById(
+      req.params.postId,
+      req.user?.id ?? null,
+    );
+    sendResult(res, result);
+  }
+
+  static async fetchComments(req, res) {
+    const { limit = 20, cursor = null } = req.validated?.query ?? {};
+    const result = await Post.fetchComments(req.params.postId, { limit, cursor });
     sendResult(res, result);
   }
 

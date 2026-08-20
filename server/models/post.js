@@ -1,5 +1,44 @@
 const supabase = require("../config/db.js");
 const { ok, fail, dbError } = require("../utils/result");
+const { applyKeyset, ordered, toPage } = require("../utils/cursor");
+
+// Scalar counts instead of embedded arrays: a post with 5k likes used to ship
+// 5k rows to render one number.
+const POST_COLUMNS =
+  "*, user: users!inner (id, name), likeCount: postLikes(count), commentCount: comments(count)";
+
+const COMMENT_COLUMNS = "*, user: users (id, name)";
+
+const firstCount = (value) => value?.[0]?.count ?? 0;
+
+/** Collapses the aggregate embeds and adds `likedByMe` for the viewer. */
+const shapePost = (row, likedPostIds) => {
+  const { likeCount, commentCount, ...post } = row;
+
+  return {
+    ...post,
+    likeCount: firstCount(likeCount),
+    commentCount: firstCount(commentCount),
+    likedByMe: likedPostIds.has(post.id),
+  };
+};
+
+/**
+ * Which of these posts has the viewer liked? One bounded query for the whole
+ * page, instead of embedding every like row in every post.
+ */
+const fetchLikedPostIds = async (postIds, viewerId) => {
+  if (!viewerId || postIds.length === 0) return new Set();
+
+  const { data, error } = await supabase
+    .from("postLikes")
+    .select("postId")
+    .eq("userId", viewerId)
+    .in("postId", postIds);
+
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.postId));
+};
 
 class Post {
   static async createOrUpdatePost(postData) {
@@ -20,19 +59,23 @@ class Post {
     }
   }
 
-  static async fetchPosts(limit = 10, userName = null) {
+  static async fetchPosts({
+    limit = 10,
+    cursor = null,
+    userName = null,
+    viewerId = null,
+  } = {}) {
     try {
-      let query = supabase
-        .from("posts")
-        .select(
-          "*, user: users!inner (id, name), postLikes (*), comments (count)",
-        )
-        .order("created_at", { ascending: false })
-        .limit(limit);
+      // One extra row tells us whether another page exists.
+      let query = ordered(supabase.from("posts").select(POST_COLUMNS)).limit(
+        limit + 1,
+      );
 
       if (userName) {
         query = query.ilike("user.name", `%${userName}%`);
       }
+
+      query = applyKeyset(query, cursor);
 
       const { data, error } = await query;
 
@@ -40,21 +83,27 @@ class Post {
         return dbError("fetching posts", error);
       }
 
-      return ok({ data });
+      const { items, nextCursor } = toPage(data ?? [], limit);
+      const likedPostIds = await fetchLikedPostIds(
+        items.map((post) => post.id),
+        viewerId,
+      );
+
+      return ok({
+        data: items.map((row) => shapePost(row, likedPostIds)),
+        nextCursor,
+      });
     } catch (error) {
       return dbError("fetching posts", error);
     }
   }
 
-  static async fetchPostById(postId) {
+  static async fetchPostById(postId, viewerId = null) {
     try {
       const { data, error } = await supabase
         .from("posts")
-        .select(
-          "*, user: users (id, name), postLikes (*), comments (* , user: users(id, name))",
-        )
+        .select(POST_COLUMNS)
         .eq("id", postId)
-        .order("created_at", { ascending: false, referencedTable: "comments" })
         .maybeSingle();
 
       if (error) {
@@ -65,9 +114,35 @@ class Post {
         return fail("Post not found", "not_found");
       }
 
-      return ok({ data });
+      // Comments are no longer embedded — they have their own paginated
+      // endpoint, so opening a post with 10k comments stays cheap.
+      const likedPostIds = await fetchLikedPostIds([data.id], viewerId);
+
+      return ok({ data: shapePost(data, likedPostIds) });
     } catch (error) {
       return dbError("fetching post by ID", error);
+    }
+  }
+
+  static async fetchComments(postId, { limit = 20, cursor = null } = {}) {
+    try {
+      const query = applyKeyset(
+        ordered(
+          supabase.from("comments").select(COMMENT_COLUMNS).eq("postId", postId),
+        ).limit(limit + 1),
+        cursor,
+      );
+
+      const { data, error } = await query;
+
+      if (error) {
+        return dbError("fetching comments", error);
+      }
+
+      const { items, nextCursor } = toPage(data ?? [], limit);
+      return ok({ data: items, nextCursor });
+    } catch (error) {
+      return dbError("fetching comments", error);
     }
   }
 
@@ -114,7 +189,7 @@ class Post {
       const { data, error } = await supabase
         .from("comments")
         .insert(comment)
-        .select()
+        .select(COMMENT_COLUMNS)
         .single();
 
       if (error) {

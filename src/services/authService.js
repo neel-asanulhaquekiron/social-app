@@ -1,3 +1,4 @@
+import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import {
   clearNotificationBadge,
@@ -121,6 +122,9 @@ export const logout = async () => {
   } catch (error) {
     console.error("Error signing out:", error);
   }
+
+  // Never let the next account see the previous one's cached feed/notifications.
+  queryClient.clear();
 
   // Legacy storage from the pre-Supabase-Auth builds.
   await AsyncStorage.multiRemove(["token", "user"]);
