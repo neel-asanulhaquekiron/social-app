@@ -1,6 +1,9 @@
-import { channelStatusLogger, supabase } from "@/lib/supabase";
+import {
+  channelStatusLogger,
+  supabase,
+  unsubscribeFromChannel,
+} from "@/lib/supabase";
 import { api } from "./apiClient";
-import { unsubscribeFromChannel } from "./postService";
 
 export const markNotificationAsClicked = (notificationId) =>
   api.patch(`/notifications/${notificationId}/clicked`);
