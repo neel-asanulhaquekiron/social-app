@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 const Welcome = () => {
   const router = useRouter();
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <StatusBar style="dark" />
       <View style={styles.container}>
         {/* title */}
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: theme.colors.surface,
     paddingHorizontal: wp(4),
     gap: 50,
   },

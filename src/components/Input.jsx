@@ -41,7 +41,7 @@ const Input = ({
           <Ionicons
             name={isPasswordVisible ? "eye-outline" : "eye-off-outline"}
             size={20}
-            color="gray"
+            color={theme.colors.textLight}
           />
         </Pressable>
       )}

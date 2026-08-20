@@ -145,10 +145,10 @@ export default memo(PostCard);
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "white",
-    borderRadius: theme.radius?.lg ?? 16,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: theme.colors?.gray ?? "#e5e5e5",
+    borderColor: theme.colors.gray,
     padding: 14,
     marginBottom: 14,
     gap: 10,
@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
   },
   seeMoreText: {
     fontSize: hp(1.6),
-    color: theme.colors.primaryDark ?? theme.colors.text,
-    fontWeight: theme.fonts.semibold,
+    color: theme.colors.primaryDark,
+    fontWeight: theme.fonts.semiBold,
   },
   footer: {
     flexDirection: "row",

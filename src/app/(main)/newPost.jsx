@@ -30,7 +30,7 @@ const NewPost = () => {
     const body = bodyRef.current.trim();
 
     if (!body) {
-      Alert.alert("Post", "Please write something or add an image");
+      Alert.alert("Post", "Please write something before posting");
       return;
     }
 
@@ -54,7 +54,7 @@ const NewPost = () => {
   };
 
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <View style={styles.container}>
         <Header title="Create Post" mb={15} />
 
@@ -77,6 +77,9 @@ const NewPost = () => {
               placeholder="What's on your mind?"
               placeholderTextColor={theme.colors.textLight}
               multiline
+              autoFocus
+              maxLength={3000}
+              accessibilityLabel="Post body"
               style={styles.textInput}
               onChangeText={(value) => (bodyRef.current = value)}
             />
@@ -111,7 +114,7 @@ const styles = StyleSheet.create({
   },
   username: {
     fontSize: hp(2),
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.semiBold,
     color: theme.colors.text,
   },
   publicText: {
@@ -121,7 +124,7 @@ const styles = StyleSheet.create({
   textEditor: {
     borderWidth: 1,
     borderColor: theme.colors.border,
-    borderRadius: theme.radius?.sm ?? 8,
+    borderRadius: theme.radius.sm,
     padding: 10,
     maxHeight: hp(40), // Limit editor height
   },

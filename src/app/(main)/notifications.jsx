@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import { ListState } from "@/components/ListStates";
+import { theme } from "@/constants/theme";
 import NotificationItem from "@/components/NotificationItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
@@ -82,7 +83,7 @@ const Notifications = () => {
   );
 
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <View style={styles.container}>
         <Header title="Notifications" />
 
@@ -119,7 +120,7 @@ export default Notifications;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: theme.colors.surface,
     paddingHorizontal: wp(4),
     paddingTop: hp(1),
   },
