@@ -28,7 +28,7 @@ const PostCard = ({
   const commentCount = item?.commentCount ?? 0;
   const createdAt = moment(item?.created_at).format("MMM D");
 
-  const { mutate: toggleLike } = useMutation({
+  const { mutate: toggleLike, isPending: likePending } = useMutation({
     mutationFn: (nextLiked) =>
       nextLiked ? createPostLike(item?.id) : removePostLike(item?.id),
     onMutate: async (nextLiked) => {
@@ -111,7 +111,16 @@ const PostCard = ({
       {/* footer actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={() => toggleLike(!liked)}>
+          {/* Disabled while in flight: a rapid double-tap used to fire two
+              requests, and the second could land before the first. */}
+          <TouchableOpacity
+            onPress={() => toggleLike(!liked)}
+            disabled={likePending}
+            accessibilityRole="button"
+            accessibilityLabel={liked ? "Unlike post" : "Like post"}
+            accessibilityState={{ selected: liked, disabled: likePending }}
+            hitSlop={8}
+          >
             <Ionicons
               name={liked ? "heart" : "heart-outline"}
               size={hp(2.6)}
