@@ -26,7 +26,9 @@ export const updateCachedPost = (queryClient, postId, updater) => {
       : old,
   );
 
-  queryClient.setQueryData(queryKeys.post(id), (old) => (old ? apply(old) : old));
+  queryClient.setQueryData(queryKeys.post(id), (old) =>
+    old ? apply(old) : old,
+  );
 };
 
 /** Optimistic like toggle; also used to roll back a failed mutation. */

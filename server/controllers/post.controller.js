@@ -42,7 +42,10 @@ class PostController {
 
   static async fetchComments(req, res) {
     const { limit = 20, cursor = null } = req.validated?.query ?? {};
-    const result = await Post.fetchComments(req.params.postId, { limit, cursor });
+    const result = await Post.fetchComments(req.params.postId, {
+      limit,
+      cursor,
+    });
     sendResult(res, result);
   }
 
@@ -52,7 +55,9 @@ class PostController {
 
     if (result.success) {
       // Off the request path: in-app notification row + push to the post owner.
-      enqueue(() => notifyPostOwner({ type: "like", postId, actorId: req.user.id }));
+      enqueue(() =>
+        notifyPostOwner({ type: "like", postId, actorId: req.user.id }),
+      );
     }
     sendResult(res, result, 201);
   }

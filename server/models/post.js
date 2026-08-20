@@ -131,7 +131,10 @@ class Post {
     try {
       const query = applyKeyset(
         ordered(
-          supabase.from("comments").select(COMMENT_COLUMNS).eq("postId", postId),
+          supabase
+            .from("comments")
+            .select(COMMENT_COLUMNS)
+            .eq("postId", postId),
         ).limit(limit + 1),
         cursor,
       );
@@ -155,7 +158,10 @@ class Post {
       // retried request never creates a second like.
       const { data, error } = await supabase
         .from("postLikes")
-        .upsert(postLike, { onConflict: "postId,userId", ignoreDuplicates: true })
+        .upsert(postLike, {
+          onConflict: "postId,userId",
+          ignoreDuplicates: true,
+        })
         .select()
         .maybeSingle();
 

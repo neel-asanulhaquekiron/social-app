@@ -11,22 +11,30 @@ const notFound = (req, res) => {
 
 // Central error handler: always JSON, never a stack trace or library message
 // in production. Handles body-parser errors (malformed JSON) as 400.
-// eslint-disable-next-line no-unused-vars
+// `next` is unused but required — Express only treats a handler as an error
+// handler if it declares four parameters.
 const errorHandler = (err, req, res, next) => {
   if (err?.type === "entity.parse.failed") {
-    return res
-      .status(400)
-      .json({ success: false, msg: "Malformed JSON body", code: "bad_request" });
+    return res.status(400).json({
+      success: false,
+      msg: "Malformed JSON body",
+      code: "bad_request",
+    });
   }
 
   if (err?.type === "entity.too.large") {
-    return res
-      .status(413)
-      .json({ success: false, msg: "Request body too large", code: "bad_request" });
+    return res.status(413).json({
+      success: false,
+      msg: "Request body too large",
+      code: "bad_request",
+    });
   }
 
   const status = Number.isInteger(err?.status) ? err.status : 500;
-  (req.log || require("../config/logger")).error({ err }, `unhandled error on ${req.method} ${req.originalUrl}`);
+  (req.log || require("../config/logger")).error(
+    { err },
+    `unhandled error on ${req.method} ${req.originalUrl}`,
+  );
 
   res.status(status).json({
     success: false,
