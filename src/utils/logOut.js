@@ -1,13 +1,13 @@
 import { logout } from "@/services/authService";
 import { Alert } from "react-native";
 
-const performLogout = async ({ setAuth, router }) => {
+// No navigation here: ending the Supabase session flips the route guard in
+// the root layout, which drops the authed screens and lands on /welcome.
+const performLogout = async () => {
   await logout();
-  setAuth(null);
-  router.replace("/welcome");
 };
 
-export const handleLogOut = ({ setAuth, router }) => {
+export const handleLogOut = () => {
   Alert.alert("Confirm", "Are you sure you want to log out?", [
     {
       text: "Cancel",
@@ -16,7 +16,7 @@ export const handleLogOut = ({ setAuth, router }) => {
     },
     {
       text: "Logout",
-      onPress: () => performLogout({ setAuth, router }),
+      onPress: () => performLogout(),
       style: "destructive",
     },
   ]);

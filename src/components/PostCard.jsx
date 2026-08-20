@@ -55,7 +55,7 @@ const PostCard = ({
 
   const openPostDetails = () => {
     if (!disableDetailsNavigation) {
-      router.push({ pathname: "postDetails", params: { postId: item?.id } });
+      router.push({ pathname: "/postDetails", params: { postId: item?.id } });
     }
   };
 

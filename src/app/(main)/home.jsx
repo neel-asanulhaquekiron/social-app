@@ -105,6 +105,9 @@ const Home = () => {
     }, [user?.id]),
   );
 
+  // Keyed on the user id: the route guard means Home only mounts with a user,
+  // and re-subscribing on change avoids a stale `notifications:undefined`
+  // channel if the account ever switches under us.
   useEffect(() => {
     const postChannel = subscribeToPosts(setPosts);
     const commentChannel = subscribeToAllComments(setPosts);
@@ -118,7 +121,7 @@ const Home = () => {
       unsubscribeFromChannel(commentChannel);
       unsubscribeFromChannel(notificationChannel);
     };
-  }, []);
+  }, [user?.id]);
 
   return (
     <ScreenWrapper bg="white" scrollable={false}>
@@ -225,7 +228,7 @@ const HomeHeader = ({
         <Pressable
           onPress={() => {
             setNotificationCount(0);
-            router.push("notifications");
+            router.push("/notifications");
           }}
         >
           <Ionicons
@@ -242,7 +245,7 @@ const HomeHeader = ({
           )}
         </Pressable>
 
-        <Pressable onPress={() => router.push("newPost")}>
+        <Pressable onPress={() => router.push("/newPost")}>
           <Ionicons
             name="add-circle-outline"
             size={hp(3.2)}
@@ -250,7 +253,7 @@ const HomeHeader = ({
           />
         </Pressable>
 
-        <Pressable onPress={() => router.push("profile")}>
+        <Pressable onPress={() => router.push("/profile")}>
           <Avatar size={hp(3.2)} color={theme.colors.text} />
         </Pressable>
       </View>
