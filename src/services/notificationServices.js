@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "@/constants";
-import { supabase } from "@/lib/supabase";
+import { channelStatusLogger, supabase } from "@/lib/supabase";
 import { authFetch } from "./apiClient";
 import { unsubscribeFromChannel } from "./postService";
 
@@ -73,7 +73,7 @@ export const subscribeToNotifications = (userId, setNotificationCount) => {
         }
       },
     )
-    .subscribe();
+    .subscribe(channelStatusLogger(`notifications:${userId}`));
 
   return channel;
 };

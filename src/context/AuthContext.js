@@ -14,13 +14,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     let cancelled = false;
 
+    // Realtime must be carrying the user's JWT *before* any guarded screen
+    // mounts and subscribes: postgres_changes on the authenticated-only
+    // tables (notifications, comments, postLikes) silently deliver nothing to
+    // a channel that was opened while the socket still had the anon key.
+    // Passing the token explicitly keeps this off the auth lock.
+    const applySession = async (session) => {
+      try {
+        await supabase.realtime.setAuth(session?.access_token ?? null);
+      } catch (error) {
+        console.error("Error applying realtime auth:", error);
+      }
+
+      if (cancelled) return;
+      setUser(session?.user ? toAuthUser(session.user) : null);
+      setIsReady(true);
+    };
+
     supabase.auth
       .getSession()
-      .then(({ data }) => {
-        if (cancelled) return;
-        setUser(data?.session?.user ? toAuthUser(data.session.user) : null);
-        setIsReady(true);
-      })
+      .then(({ data }) => applySession(data?.session))
       .catch((error) => {
         console.error("Error restoring session:", error);
         if (!cancelled) setIsReady(true);
@@ -28,11 +41,9 @@ export const AuthProvider = ({ children }) => {
 
     // SIGNED_IN / SIGNED_OUT / TOKEN_REFRESHED all land here, so a login, a
     // logout and a session revoked server-side move the guards the same way.
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-      setUser(session?.user ? toAuthUser(session.user) : null);
-      setIsReady(true);
-    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) =>
+      applySession(session),
+    );
 
     return () => {
       cancelled = true;
