@@ -41,21 +41,24 @@ const fetchLikedPostIds = async (postIds, viewerId) => {
 };
 
 class Post {
-  static async createOrUpdatePost(postData) {
+  // Insert, not upsert: the validator only lets `body` through, so an id can
+  // never reach here and the "update" half was unreachable. Editing a post
+  // needs its own route with an ownership check.
+  static async createPost(postData) {
     try {
       const { data, error } = await supabase
         .from("posts")
-        .upsert(postData)
+        .insert(postData)
         .select()
         .single();
 
       if (error) {
-        return dbError("creating/updating post", error);
+        return dbError("creating post", error);
       }
 
       return ok({ data });
     } catch (error) {
-      return dbError("creating/updating post", error);
+      return dbError("creating post", error);
     }
   }
 

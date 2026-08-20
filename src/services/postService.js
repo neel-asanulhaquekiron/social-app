@@ -1,7 +1,7 @@
 import { channelStatusLogger, supabase } from "@/lib/supabase";
 import { api } from "./apiClient";
 
-export const createOrUpdatePost = (postData) => api.post("/posts", postData);
+export const createPost = (postData) => api.post("/posts", postData);
 
 export const fetchPosts = ({ limit = 10, cursor = null, userName = null } = {}) => {
   const params = new URLSearchParams({ limit: String(limit) });
