@@ -2,10 +2,9 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
-import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { signUpSchema } from "@/helpers/validationSchemas";
-import { registerPushToken, signup } from "@/services/authService";
+import { signup } from "@/services/authService";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -16,7 +15,6 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 const SignUp = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { setAuth } = useAuth();
 
   const {
     control,
@@ -36,11 +34,9 @@ const SignUp = () => {
     });
     setLoading(false);
 
-    if (result.success) {
-      setAuth(result.user);
-      registerPushToken();
-      router.replace("/home");
-    } else {
+    // On success the auth state change flips the route guard in the root
+    // layout, which navigates for us — no imperative replace needed.
+    if (!result.success) {
       Alert.alert("Sign Up Failed", result.msg || "Something went wrong");
     }
   };
@@ -143,7 +139,7 @@ const SignUp = () => {
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account?</Text>
-          <Pressable onPress={() => router.push("login")}>
+          <Pressable onPress={() => router.push("/login")}>
             <Text
               style={[
                 styles.footerText,
