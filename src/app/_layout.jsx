@@ -1,7 +1,6 @@
 import NotificationDeepLink from "@/components/NotificationDeepLink";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { queryClient } from "@/lib/queryClient";
-import { registerPushToken } from "@/services/authService";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   isExpoGoAndroid,
@@ -57,13 +56,10 @@ const MainLayout = () => {
     return () => subscription.remove();
   }, []);
 
-  // Bind this device's push token to whoever is signed in (login, signup and
-  // restored sessions all pass through here).
-  useEffect(() => {
-    if (user?.id) {
-      registerPushToken();
-    }
-  }, [user?.id]);
+  // Push registration deliberately does NOT happen here any more. Doing it on
+  // every sign-in fired the OS permission dialog with no context, and iOS only
+  // ever shows that dialog once. PushPermissionPrompt on the feed explains
+  // first, and registers silently when permission is already granted.
 
   return (
     <>
