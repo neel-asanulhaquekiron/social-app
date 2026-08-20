@@ -36,9 +36,39 @@ export const clearNotificationBadge = async (): Promise<void> => {
   await Notifications.setBadgeCountAsync(0);
 };
 
-export const registerForPushNotificationsAsync = async (): Promise<
-  string | null
-> => {
+export type PushPermissionStatus = "granted" | "denied" | "undetermined";
+
+/** Reads the current status without ever showing the OS dialog. */
+export const getPushPermissionStatus =
+  async (): Promise<PushPermissionStatus> => {
+    if (isExpoGoAndroid || !Device.isDevice) return "denied";
+
+    const { status } = await Notifications.getPermissionsAsync();
+    return status as PushPermissionStatus;
+  };
+
+/**
+ * Shows the OS dialog. iOS only ever shows it once per install, so this must
+ * be called from a deliberate user action, after an in-app explanation.
+ */
+export const requestPushPermission =
+  async (): Promise<PushPermissionStatus> => {
+    if (isExpoGoAndroid || !Device.isDevice) return "denied";
+
+    const { status } = await Notifications.requestPermissionsAsync();
+    return status as PushPermissionStatus;
+  };
+
+/**
+ * Returns an Expo push token, or null.
+ *
+ * By default this never prompts: it only produces a token when permission has
+ * already been granted. Pass `promptIfNeeded` from a screen that has just
+ * explained why notifications are useful.
+ */
+export const registerForPushNotificationsAsync = async ({
+  promptIfNeeded = false,
+}: { promptIfNeeded?: boolean } = {}): Promise<string | null> => {
   if (isExpoGoAndroid) {
     console.log(EXPO_GO_ANDROID_MESSAGE);
     return null;
@@ -62,7 +92,11 @@ export const registerForPushNotificationsAsync = async (): Promise<
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;
 
+  // Only ask when a caller explicitly opted in to asking — otherwise a cold
+  // start would burn the single prompt iOS allows.
   if (existingStatus !== "granted") {
+    if (!promptIfNeeded) return null;
+
     const { status } = await Notifications.requestPermissionsAsync();
     finalStatus = status;
   }
