@@ -1,53 +1,17 @@
-import { API_BASE_URL } from "@/constants";
 import { channelStatusLogger, supabase } from "@/lib/supabase";
-import { authFetch } from "./apiClient";
+import { api } from "./apiClient";
 import { unsubscribeFromChannel } from "./postService";
 
-export const markNotificationAsClicked = async (notificationId) => {
-  try {
-    const res = await authFetch(
-      `${API_BASE_URL}/notifications/${notificationId}/clicked`,
-      { method: "PATCH" },
-    );
-    return await res.json();
-  } catch (error) {
-    console.error("Error marking notification as clicked via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const markNotificationAsClicked = (notificationId) =>
+  api.patch(`/notifications/${notificationId}/clicked`);
 
 // Notifications for the authenticated user (derived from the token server-side).
-export const fetchNotifications = async () => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/notifications`);
-    return await res.json();
-  } catch (error) {
-    console.error("Error fetching notifications via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const fetchNotifications = () => api.get("/notifications");
 
-export const markNotificationsSeen = async () => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/notifications/mark-seen`, {
-      method: "POST",
-    });
-    return await res.json();
-  } catch (error) {
-    console.error("Error marking notifications as seen via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const markNotificationsSeen = () => api.post("/notifications/mark-seen");
 
-export const getUnseenNotificationCount = async () => {
-  try {
-    const res = await authFetch(`${API_BASE_URL}/notifications/unseen-count`);
-    return await res.json();
-  } catch (error) {
-    console.error("Error fetching unseen notification count via API:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
-  }
-};
+export const getUnseenNotificationCount = () =>
+  api.get("/notifications/unseen-count");
 
 export const subscribeToNotifications = (userId, setNotificationCount) => {
   const existingChannel = supabase
