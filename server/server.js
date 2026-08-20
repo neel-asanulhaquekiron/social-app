@@ -27,7 +27,8 @@ app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || env.corsOrigins.includes(origin)) return callback(null, true);
+      if (!origin || env.corsOrigins.includes(origin))
+        return callback(null, true);
       return callback(null, false);
     },
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],

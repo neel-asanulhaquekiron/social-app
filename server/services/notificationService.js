@@ -29,18 +29,23 @@ const notifyPostOwner = async ({ type, postId, actorId, commentId }) => {
   if (!template) return;
 
   try {
-    const [{ data: post, error: postError }, { data: actor, error: actorError }] =
-      await Promise.all([
-        supabase
-          .from("posts")
-          .select("userId, owner:users!posts_userId_fkey(id, name, pushToken)")
-          .eq("id", postId)
-          .maybeSingle(),
-        supabase.from("users").select("id, name").eq("id", actorId).maybeSingle(),
-      ]);
+    const [
+      { data: post, error: postError },
+      { data: actor, error: actorError },
+    ] = await Promise.all([
+      supabase
+        .from("posts")
+        .select("userId, owner:users!posts_userId_fkey(id, name, pushToken)")
+        .eq("id", postId)
+        .maybeSingle(),
+      supabase.from("users").select("id, name").eq("id", actorId).maybeSingle(),
+    ]);
 
     if (postError || actorError) {
-      logger.error({ err: postError || actorError }, "notifyPostOwner lookup failed");
+      logger.error(
+        { err: postError || actorError },
+        "notifyPostOwner lookup failed",
+      );
       return;
     }
     if (!post?.owner || !actor) return;

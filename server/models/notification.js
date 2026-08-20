@@ -45,7 +45,10 @@ class Notification {
     }
   }
 
-  static async fetchNotifications(receiverId, { limit = 20, cursor = null } = {}) {
+  static async fetchNotifications(
+    receiverId,
+    { limit = 20, cursor = null } = {},
+  ) {
     try {
       const query = applyKeyset(
         ordered(

@@ -32,7 +32,8 @@ const verify = (token) =>
       getKey,
       { algorithms: ["ES256"], audience: "authenticated" },
       (err, payload) => {
-        if (err || !payload?.sub) return reject(err ?? new Error("invalid token"));
+        if (err || !payload?.sub)
+          return reject(err ?? new Error("invalid token"));
 
         // Supabase puts the user id in `sub`; name lives in user_metadata.
         resolve({

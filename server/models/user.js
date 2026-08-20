@@ -60,7 +60,10 @@ class User {
   static async ensureProfile({ id, email, name }) {
     const { data, error } = await supabase
       .from("users")
-      .upsert({ id, email, name }, { onConflict: "id", ignoreDuplicates: false })
+      .upsert(
+        { id, email, name },
+        { onConflict: "id", ignoreDuplicates: false },
+      )
       .select(PROFILE_COLUMNS)
       .single();
 
