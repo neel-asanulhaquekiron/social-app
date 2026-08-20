@@ -96,7 +96,7 @@ const Notifications = () => {
             ScrollView, which mounts all of them at once. */}
         <FlatList
           data={notifications}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={(item, index) => String(item?.id ?? index)}
           contentContainerStyle={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           refreshing={isRefetching}

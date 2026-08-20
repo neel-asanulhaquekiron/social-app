@@ -15,6 +15,14 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   },
 });
 
+/** Lives here, not in a service, so every service can use it without one
+ * feature module importing another just for a teardown helper. */
+export const unsubscribeFromChannel = (channel) => {
+  if (channel) {
+    supabase.removeChannel(channel);
+  }
+};
+
 /**
  * Status handler for `channel.subscribe()`. Without one, a channel that fails
  * to join stays silent forever and looks exactly like "nothing happened yet".

@@ -78,8 +78,3 @@ export const subscribeToPostLikes = (postId, onChange) =>
     onChange,
   );
 
-export const unsubscribeFromChannel = (channel) => {
-  if (channel) {
-    supabase.removeChannel(channel);
-  }
-};

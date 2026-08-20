@@ -26,11 +26,7 @@ const CommentItem = ({
 
   return (
     <View style={styles.container}>
-      <Avatar
-        uri={item?.user?.image}
-        size={hp(4)}
-        rounded={theme.radius?.md ?? 12}
-      />
+      <Avatar size={hp(4)} color={theme.colors.textLight} />
       <View style={[styles.bubble, highlight && styles.highlight]}>
         <View style={styles.header}>
           <View style={styles.userNameContainer}>

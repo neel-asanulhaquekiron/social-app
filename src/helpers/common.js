@@ -1,13 +1,16 @@
 import { Dimensions } from "react-native";
 
-const { width: deviceWidth, height: deviceHeight } = Dimensions.get("window");
+// Read at call time, not once at module load: the old module-level snapshot
+// was captured before the first render and never changed, so every value was
+// wrong after a rotation or a foldable resize.
+//
+// Note this still only helps values computed during render. Styles built by
+// StyleSheet.create() at module scope are evaluated once by definition —
+// making those react to size changes means building them inside components
+// from useWindowDimensions(), which is the responsive/font-scaling work in
+// issue #48.
+export const hp = (percentage) =>
+  (Dimensions.get("window").height * percentage) / 100;
 
-export const hp = (percentage) => {
-  return (deviceHeight * percentage) / 100;
-};
-
-export const wp = (percentage) => {
-  return (deviceWidth * percentage) / 100;
-};
-
-export const capped = (value, max) => Math.min(value, max);
+export const wp = (percentage) =>
+  (Dimensions.get("window").width * percentage) / 100;
