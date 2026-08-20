@@ -5,18 +5,14 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { handleLogOut } from "@/utils/logOut";
-import { useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 const Profile = () => {
-  const { user, setAuth } = useAuth();
-  const router = useRouter();
-
-  const onLogout = () => handleLogOut({ setAuth, router });
+  const { user } = useAuth();
 
   return (
     <ScreenWrapper bg="white">
-      <UserHeader user={user} handleLogout={onLogout} />
+      <UserHeader user={user} handleLogout={handleLogOut} />
     </ScreenWrapper>
   );
 };

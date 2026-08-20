@@ -1,27 +1,26 @@
-import Constants from "expo-constants";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
-const isExpoGo = Constants.appOwnership === "expo";
+// Expo Go reports "storeClient"; development builds (expo-dev-client) and
+// production builds report "bare"/"standalone" — so push keeps working in dev
+// builds, unlike a plain `executionEnvironment !== standalone` check.
+const isExpoGo =
+  Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
-let Notifications = null;
+// Remote push notifications were removed from Expo Go on Android in SDK 53.
+export const isExpoGoAndroid = isExpoGo && Platform.OS === "android";
 
-const getNotifications = async () => {
-  if (!Notifications) {
-    const mod = await import("expo-notifications");
-    Notifications = mod;
-  }
-  return Notifications;
-};
+const EXPO_GO_ANDROID_MESSAGE =
+  "Push notifications unavailable in Expo Go on Android (SDK 53+)";
 
-export const setNotificationHandler = async () => {
-  if (isExpoGo && Platform.OS === "android") {
-    console.log(
-      "Push notifications unavailable in Expo Go on Android (SDK 53+)",
-    );
+export const setNotificationHandler = () => {
+  if (isExpoGoAndroid) {
+    console.log(EXPO_GO_ANDROID_MESSAGE);
     return;
   }
-  const Notifications = await getNotifications();
+
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
@@ -32,43 +31,14 @@ export const setNotificationHandler = async () => {
   });
 };
 
-/**
- * Subscribes to notification tap events (app in foreground, background, or
- * cold-started from a notification) and navigates to the related post.
- * Returns an unsubscribe function.
- */
-export const addNotificationResponseListener = async (onResponse) => {
-  if (isExpoGo && Platform.OS === "android") {
-    return () => {};
-  }
-  const Notifications = await getNotifications();
-
-  const subscription = Notifications.addNotificationResponseReceivedListener(
-    (response) => {
-      onResponse(response?.notification?.request?.content?.data ?? {});
-    },
-  );
-
-  // Handle the case where the app was launched by tapping a notification.
-  const lastResponse = await Notifications.getLastNotificationResponseAsync();
-  if (lastResponse) {
-    onResponse(lastResponse?.notification?.request?.content?.data ?? {});
-  }
-
-  return () => subscription.remove();
-};
-
 export const clearNotificationBadge = async () => {
-  if (isExpoGo && Platform.OS === "android") return;
-  const Notifications = await getNotifications();
+  if (isExpoGoAndroid) return;
   await Notifications.setBadgeCountAsync(0);
 };
 
 export const registerForPushNotificationsAsync = async () => {
-  if (isExpoGo && Platform.OS === "android") {
-    console.log(
-      "Push notifications unavailable in Expo Go on Android (SDK 53+)",
-    );
+  if (isExpoGoAndroid) {
+    console.log(EXPO_GO_ANDROID_MESSAGE);
     return null;
   }
 
@@ -76,8 +46,6 @@ export const registerForPushNotificationsAsync = async () => {
     console.log("Push notifications require a physical device");
     return null;
   }
-
-  const Notifications = await getNotifications();
 
   // On Android the channel must exist before requesting a token.
   if (Platform.OS === "android") {

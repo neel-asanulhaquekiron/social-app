@@ -36,7 +36,11 @@ const NewPost = () => {
     setLoading(false);
 
     if (res.success) {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/home");
+      }
     } else {
       Alert.alert("Post", res.msg || "Something went wrong");
     }
