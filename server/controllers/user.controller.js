@@ -36,7 +36,10 @@ class UserController {
 
   // POST /users/registerPushToken — always bound to the authenticated user.
   static async registerPushToken(req, res) {
-    const result = await User.registerPushToken(req.user.id, req.body.pushToken);
+    const result = await User.registerPushToken(
+      req.user.id,
+      req.body.pushToken,
+    );
     sendResult(res, result);
   }
 }

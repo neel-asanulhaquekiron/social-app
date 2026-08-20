@@ -85,7 +85,10 @@ const sendPushNotifications = async (messages) => {
   }
 
   if (Object.keys(ticketIdToToken).length) {
-    setTimeout(() => checkReceipts(ticketIdToToken), RECEIPT_CHECK_DELAY_MS).unref();
+    setTimeout(
+      () => checkReceipts(ticketIdToToken),
+      RECEIPT_CHECK_DELAY_MS,
+    ).unref();
   }
 };
 

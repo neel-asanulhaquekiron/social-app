@@ -3,7 +3,10 @@ import { patchCommentCount, updateCachedPost } from "@/lib/postCache";
 import { queryKeys } from "@/lib/queryClient";
 import { unsubscribeFromChannel } from "@/lib/supabase";
 import { subscribeToNotifications } from "@/services/notificationServices";
-import { subscribeToAllComments, subscribeToPosts } from "@/services/postService";
+import {
+  subscribeToAllComments,
+  subscribeToPosts,
+} from "@/services/postService";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 

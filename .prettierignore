@@ -1,0 +1,13 @@
+node_modules
+server/node_modules
+.expo
+dist
+android
+ios
+package-lock.json
+server/package-lock.json
+
+# Generated / vendor-provided — keep byte-identical
+google-services.json
+GoogleService-Info.plist
+assets/

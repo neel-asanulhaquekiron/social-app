@@ -3,7 +3,11 @@ import { api } from "./apiClient";
 
 export const createPost = (postData) => api.post("/posts", postData);
 
-export const fetchPosts = ({ limit = 10, cursor = null, userName = null } = {}) => {
+export const fetchPosts = ({
+  limit = 10,
+  cursor = null,
+  userName = null,
+} = {}) => {
   const params = new URLSearchParams({ limit: String(limit) });
   if (cursor) params.append("cursor", cursor);
   if (userName) params.append("username", userName);
@@ -51,8 +55,10 @@ const changeChannel = (topic, config, onChange) => {
 
   return supabase
     .channel(topic)
-    .on("postgres_changes", { event: "*", schema: "public", ...config }, (payload) =>
-      onChange(payload),
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", ...config },
+      (payload) => onChange(payload),
     )
     .subscribe(channelStatusLogger(topic));
 };
@@ -77,4 +83,3 @@ export const subscribeToPostLikes = (postId, onChange) =>
     { table: "postLikes", filter: `postId=eq.${postId}` },
     onChange,
   );
-

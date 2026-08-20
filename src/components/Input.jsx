@@ -4,24 +4,40 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
-const Input = (props) => {
+// Props are destructured rather than spread wholesale: the old version passed
+// `containerStyle`, `icon` and `ref` straight through to TextInput, and set
+// `ref={props.ref && props.ref}` — which is just `props.ref`, and was then
+// overwritten by the `{...props}` spread that followed it anyway.
+const Input = ({
+  ref,
+  icon,
+  containerStyle,
+  style,
+  secureTextEntry,
+  ...props
+}) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const isPasswordField = props.secureTextEntry !== undefined;
+  const isPasswordField = secureTextEntry !== undefined;
 
   return (
-    <View
-      style={[styles.container, props.containerStyle && props.containerStyle]}
-    >
-      {props.icon && props.icon}
+    <View style={[styles.container, containerStyle]}>
+      {icon}
       <TextInput
-        ref={props.ref && props.ref}
-        style={styles.input}
+        ref={ref}
+        style={[styles.input, style]}
         placeholderTextColor={theme.colors.textLight}
         {...props}
         secureTextEntry={isPasswordField ? !isPasswordVisible : false}
       />
       {isPasswordField && (
-        <Pressable onPress={() => setIsPasswordVisible((prev) => !prev)}>
+        <Pressable
+          onPress={() => setIsPasswordVisible((prev) => !prev)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isPasswordVisible ? "Hide password" : "Show password"
+          }
+          hitSlop={8}
+        >
           <Ionicons
             name={isPasswordVisible ? "eye-outline" : "eye-off-outline"}
             size={20}
