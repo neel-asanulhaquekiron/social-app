@@ -1,15 +1,16 @@
 import Avatar from "@/components/Avatar";
 import Header from "@/components/Header";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { getPushPermissionStatus } from "@/services/notificationPermissions";
 import { handleLogOut } from "@/utils/logOut";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 
 const Profile = () => {
+  const theme = useTheme();
   const { user } = useAuth();
 
   return (
@@ -20,6 +21,8 @@ const Profile = () => {
 };
 
 const UserHeader = ({ user, handleLogout }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const { name, email } = user || {};
   return (
     <View style={styles.container}>
@@ -54,6 +57,7 @@ const UserHeader = ({ user, handleLogout }) => {
  * instead of leaving the user with silently broken notifications.
  */
 const NotificationSetting = () => {
+  const styles = useStyles();
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
@@ -86,7 +90,7 @@ const NotificationSetting = () => {
 
 export default Profile;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     paddingHorizontal: wp(4),
@@ -138,4 +142,4 @@ const styles = StyleSheet.create({
     fontSize: hp(1.8),
     color: theme.colors.textLight,
   },
-});
+}));

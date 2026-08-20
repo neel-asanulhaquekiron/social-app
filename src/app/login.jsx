@@ -1,18 +1,20 @@
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import { loginSchema } from "@/helpers/validationSchemas";
 import { login } from "@/services/authService";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 
 const Login = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef(null);
@@ -45,7 +47,7 @@ const Login = () => {
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
-      <StatusBar style="dark" />
+      <StatusBar style="auto" />
       <View style={styles.container}>
         {/* welcome */}
         <View>
@@ -137,7 +139,7 @@ const Login = () => {
 
 export default Login;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     justifyContent: "center",
@@ -173,4 +175,4 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: hp(1.8),
   },
-});
+}));

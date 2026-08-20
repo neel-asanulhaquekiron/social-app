@@ -1,11 +1,13 @@
 import Avatar from "@/components/Avatar";
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 const HomeHeader = ({ notificationCount, showFilter, onToggleFilter }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const router = useRouter();
 
   return (
@@ -78,7 +80,7 @@ const HomeHeader = ({ notificationCount, showFilter, onToggleFilter }) => {
 
 export default HomeHeader;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -111,4 +113,4 @@ const styles = StyleSheet.create({
     fontSize: hp(1.2),
     fontWeight: theme.fonts.bold,
   },
-});
+}));

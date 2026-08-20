@@ -1,6 +1,6 @@
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
 import { registerPushToken } from "@/services/authService";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import {
   getPushPermissionStatus,
   requestPushPermission,
@@ -8,7 +8,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 const DISMISSED_KEY = "pushPromptDismissed";
 
@@ -23,6 +23,8 @@ const DISMISSED_KEY = "pushPromptDismissed";
  * Renders nothing unless permission is genuinely undetermined.
  */
 const PushPermissionPrompt = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -115,7 +117,7 @@ const PushPermissionPrompt = () => {
 
 export default PushPermissionPrompt;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -169,4 +171,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-});
+}));
