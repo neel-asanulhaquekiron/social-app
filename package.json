@@ -36,11 +36,15 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^14.0.1",
     "@types/aes-js": "^3.1.4",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.2.2",
     "eslint": "^10.8.1",
     "eslint-config-expo": "~57.0.0",
     "eslint-config-prettier": "^10.1.8",
+    "jest": "~29.7.0",
+    "jest-expo": "~57.0.4",
     "prettier": "^3.9.6",
     "typescript": "~6.0.3"
   },
@@ -53,7 +57,22 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
-  "private": true
+  "private": true,
+  "jest": {
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@supabase/.*|aes-js)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/server/"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/jest.setup.js"
+    ]
+  }
 }
