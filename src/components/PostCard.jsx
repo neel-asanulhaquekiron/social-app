@@ -1,7 +1,10 @@
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { patchLike } from "@/lib/postCache";
+import { queryKeys } from "@/lib/queryClient";
 import { createPostLike, removePostLike } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -14,44 +17,35 @@ const PostCard = ({
   currentUser,
   router,
   hasShadow = true,
-  onDelete,
-  onEdit,
   disableDetailsNavigation = false,
 }) => {
-  const [likes, setLikes] = useState(item?.postLikes || []);
-  const liked = likes.some((like) => like.userId === currentUser?.id);
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
   const [showSeeMore, setShowSeeMore] = useState(false);
 
+  const liked = !!item?.likedByMe;
+  const likeCount = item?.likeCount ?? 0;
+  const commentCount = item?.commentCount ?? 0;
   const createdAt = moment(item?.created_at).format("MMM D");
 
-  const onLikePress = async () => {
-    try {
-      if (liked) {
-        const updatedLikes = likes.filter(
-          (like) => like.userId !== currentUser?.id,
-        );
-        setLikes(updatedLikes);
-        const { success, msg } = await removePostLike(item?.id);
-        if (!success) {
-          console.error("Error un-liking post:", msg);
-        }
-      } else {
-        const data = {
-          postId: item?.id,
-          userId: currentUser?.id,
-        };
-        setLikes([...likes, data]);
-        // The server creates the owner's notification + push after a like.
-        const { success, msg } = await createPostLike(item?.id);
-        if (!success) {
-          console.error("Error liking post:", msg);
-        }
-      }
-    } catch (error) {
-      console.error("Error liking/unliking post:", error);
-    }
-  };
+  const { mutate: toggleLike } = useMutation({
+    mutationFn: (nextLiked) =>
+      nextLiked ? createPostLike(item?.id) : removePostLike(item?.id),
+    onMutate: async (nextLiked) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.post(item?.id) });
+      patchLike(queryClient, item?.id, nextLiked);
+      return { previousLiked: liked };
+    },
+    onError: (error, _nextLiked, context) => {
+      // Roll the optimistic update back.
+      patchLike(queryClient, item?.id, context?.previousLiked ?? liked);
+      console.error("Error liking/unliking post:", error.message);
+    },
+    onSuccess: () => {
+      // The server also creates the owner's notification + push after a like.
+      queryClient.invalidateQueries({ queryKey: queryKeys.post(item?.id) });
+    },
+  });
 
   const openPostDetails = () => {
     if (!disableDetailsNavigation) {
@@ -117,14 +111,14 @@ const PostCard = ({
       {/* footer actions */}
       <View style={styles.footer}>
         <View style={styles.footerButton}>
-          <TouchableOpacity onPress={onLikePress}>
+          <TouchableOpacity onPress={() => toggleLike(!liked)}>
             <Ionicons
               name={liked ? "heart" : "heart-outline"}
               size={hp(2.6)}
               color={liked ? theme.colors.rose : theme.colors.textLight}
             />
           </TouchableOpacity>
-          <Text style={styles.count}>{likes.length ?? 0}</Text>
+          <Text style={styles.count}>{likeCount}</Text>
         </View>
 
         <View style={styles.footerButton}>
@@ -138,7 +132,7 @@ const PostCard = ({
               color={theme.colors.textLight}
             />
           </TouchableOpacity>
-          <Text style={styles.count}>{item?.comments?.[0]?.count ?? 0}</Text>
+          <Text style={styles.count}>{commentCount}</Text>
         </View>
       </View>
     </View>
@@ -187,34 +181,6 @@ const styles = StyleSheet.create({
     fontSize: hp(1.4),
     color: theme.colors.text,
   },
-  menu: {
-    position: "absolute",
-    top: hp(3.2),
-    right: 0,
-    backgroundColor: "white",
-    borderRadius: theme.radius?.md ?? 12,
-    borderWidth: 1,
-    borderColor: theme.colors?.gray ?? "#e5e5e5",
-    paddingVertical: 6,
-    minWidth: 130,
-    zIndex: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  menuText: {
-    fontSize: hp(1.7),
-    color: theme.colors.text,
-  },
   body: {
     gap: 10,
   },
@@ -223,10 +189,10 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     lineHeight: hp(2.4),
   },
-  postImage: {
-    width: "100%",
-    height: hp(30),
-    borderRadius: theme.radius?.md ?? 12,
+  seeMoreText: {
+    fontSize: hp(1.6),
+    color: theme.colors.primaryDark ?? theme.colors.text,
+    fontWeight: theme.fonts.semibold,
   },
   footer: {
     flexDirection: "row",

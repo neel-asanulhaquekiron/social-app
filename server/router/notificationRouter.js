@@ -15,7 +15,11 @@ router.get("/unseen-count", asyncHandler(NotificationController.unseenCount));
 
 router.post("/mark-seen", asyncHandler(NotificationController.markAllSeen));
 
-router.get("/", asyncHandler(NotificationController.list));
+router.get(
+  "/",
+  validate(NotificationValidator.listQuerySchema, "query"),
+  asyncHandler(NotificationController.list),
+);
 
 router.patch(
   "/:notificationId/clicked",

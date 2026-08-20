@@ -6,6 +6,8 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
+import { patchCommentCount } from "@/lib/postCache";
+import { queryKeys, unwrap } from "@/lib/queryClient";
 import {
   getUnseenNotificationCount,
   subscribeToNotifications,
@@ -17,8 +19,13 @@ import {
   unsubscribeFromChannel,
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -28,100 +35,153 @@ import {
   View,
 } from "react-native";
 
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 400;
+
 const Home = () => {
   const { user } = useAuth();
   const router = useRouter();
-  const [posts, setPosts] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [hasMorePosts, setHasMorePosts] = useState(true);
-  const [notificationCount, setNotificationCount] = useState(0);
+  const queryClient = useQueryClient();
   const [showFilter, setShowFilter] = useState(false);
   const [usernameFilter, setUsernameFilter] = useState("");
-  const limitRef = useRef(0);
+  const [appliedFilter, setAppliedFilter] = useState("");
 
-  const getNotificationCount = async () => {
-    if (!user?.id) {
-      return;
-    }
-
-    const { success, count, msg } = await getUnseenNotificationCount();
-    if (success) {
-      setNotificationCount(count);
-    }
-  };
-
-  const getPosts = async ({ isNewSearch = false } = {}) => {
-    if (!hasMorePosts && !isNewSearch) {
-      return;
-    }
-
-    limitRef.current = isNewSearch ? 6 : limitRef.current + 6;
-
-    const { success, data, msg } = await fetchPosts(
-      limitRef.current,
-      usernameFilter.trim() || undefined,
-    );
-
-    if (success) {
-      if (data.length === 0) {
-        setHasMorePosts(false);
-        if (isNewSearch) {
-          setPosts([]);
-        }
-        return;
-      }
-      // FIX: If no new posts were added (same length as before), stop
-      if (!isNewSearch && posts.length > 0 && data.length === posts.length) {
-        setHasMorePosts(false);
-      } else {
-        setHasMorePosts(true); // Still has more if we got new data
-      }
-      setPosts(data);
-    } else {
-      console.error("Error fetching posts:", msg);
-      setHasMorePosts(false); // Stop loading on error too
-    }
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await getPosts({ isNewSearch: true });
-    setRefreshing(false);
-  };
-
+  // The debounced value is part of the query key, so react-query keeps one
+  // cache entry per search and discards responses for keys that are no longer
+  // active — out-of-order replies can't clobber the list any more.
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      getPosts({ isNewSearch: true });
-    }, 400); // debounce: wait for user to stop typing
-
+    const timeout = setTimeout(
+      () => setAppliedFilter(usernameFilter.trim()),
+      SEARCH_DEBOUNCE_MS,
+    );
     return () => clearTimeout(timeout);
   }, [usernameFilter]);
 
-  // Re-sync the badge whenever Home regains focus (e.g. back from Notifications,
-  // where the server marked everything seen).
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.posts(appliedFilter),
+    queryFn: async ({ pageParam }) => {
+      const result = unwrap(
+        await fetchPosts({
+          limit: PAGE_SIZE,
+          cursor: pageParam,
+          userName: appliedFilter || null,
+        }),
+      );
+      return { data: result.data ?? [], nextCursor: result.nextCursor ?? null };
+    },
+    initialPageParam: null,
+    // Keyset cursor: `null` means the server has nothing more to give.
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+
+  const posts = data?.pages.flatMap((page) => page.data) ?? [];
+
+  const { data: notificationCount = 0 } = useQuery({
+    queryKey: queryKeys.unseenCount,
+    queryFn: async () => unwrap(await getUnseenNotificationCount()).count ?? 0,
+    enabled: !!user?.id,
+  });
+
+  // Re-sync the badge whenever Home regains focus (e.g. back from
+  // Notifications, where the server marked everything seen).
   useFocusEffect(
     useCallback(() => {
-      getNotificationCount();
-    }, [user?.id]),
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.unseenCount });
+      }
+    }, [user?.id, queryClient]),
   );
 
-  // Keyed on the user id: the route guard means Home only mounts with a user,
-  // and re-subscribing on change avoids a stale `notifications:undefined`
-  // channel if the account ever switches under us.
   useEffect(() => {
-    const postChannel = subscribeToPosts(setPosts);
-    const commentChannel = subscribeToAllComments(setPosts);
-    const notificationChannel = subscribeToNotifications(
-      user?.id,
-      setNotificationCount,
+    if (!user?.id) return undefined;
+
+    // New/removed posts change the list itself, so refetch it.
+    const postChannel = subscribeToPosts(() =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.allPosts }),
     );
+
+    // Comment counts are patched in place — invalidating an infinite query
+    // refetches every loaded page, which is far too much for a counter.
+    const commentChannel = subscribeToAllComments((payload) => {
+      const postId = payload?.new?.postId ?? payload?.old?.postId;
+      const delta =
+        payload.eventType === "INSERT"
+          ? 1
+          : payload.eventType === "DELETE"
+            ? -1
+            : 0;
+
+      if (postId && delta !== 0) {
+        patchCommentCount(queryClient, postId, delta);
+      }
+    });
+
+    const notificationChannel = subscribeToNotifications(user.id, () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.unseenCount });
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications });
+    });
 
     return () => {
       unsubscribeFromChannel(postChannel);
       unsubscribeFromChannel(commentChannel);
       unsubscribeFromChannel(notificationChannel);
     };
-  }, [user?.id]);
+  }, [user?.id, queryClient]);
+
+  const onEndReached = () => {
+    // The in-flight guard `onEndReached` never had: it used to double-fire and
+    // request the same page twice.
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const renderFooter = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.footerSpace}>
+          <Loading />
+        </View>
+      );
+    }
+
+    if (isError) {
+      return (
+        <View style={styles.footerSpace}>
+          <Text style={styles.emptyText}>
+            {error?.message || "Could not load posts"}
+          </Text>
+          <Pressable onPress={() => refetch()} style={styles.retryButton}>
+            <Text style={styles.retryText}>Try again</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    if (posts.length === 0) {
+      return <Text style={styles.emptyText}>No posts found</Text>;
+    }
+
+    if (isFetchingNextPage) {
+      return (
+        <View style={styles.footerSpace}>
+          <Loading />
+        </View>
+      );
+    }
+
+    return <Text style={styles.noMoreText}>No more posts</Text>;
+  };
 
   return (
     <ScreenWrapper bg="white" scrollable={false}>
@@ -129,7 +189,6 @@ const Home = () => {
         {/* header */}
         <HomeHeader
           notificationCount={notificationCount}
-          setNotificationCount={setNotificationCount}
           showFilter={showFilter}
           setShowFilter={setShowFilter}
           setUsernameFilter={setUsernameFilter}
@@ -164,21 +223,11 @@ const Home = () => {
           contentContainerStyle={styles.listStyle}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
-          onEndReached={() => getPosts()}
+          onEndReached={onEndReached}
           onEndReachedThreshold={0.3}
-          ListFooterComponent={
-            posts.length === 0 ? (
-              <Text style={styles.emptyText}>No posts found</Text>
-            ) : hasMorePosts ? (
-              <View style={{ marginVertical: 30 }}>
-                <Loading />
-              </View>
-            ) : (
-              <Text style={styles.noMoreText}>No more posts</Text>
-            )
-          }
+          ListFooterComponent={renderFooter}
           renderItem={({ item }) => (
             <PostCard item={item} currentUser={user} router={router} />
           )}
@@ -192,7 +241,6 @@ export default Home;
 
 const HomeHeader = ({
   notificationCount,
-  setNotificationCount,
   showFilter,
   setShowFilter,
   setUsernameFilter,
@@ -225,12 +273,7 @@ const HomeHeader = ({
           />
         </Pressable>
 
-        <Pressable
-          onPress={() => {
-            setNotificationCount(0);
-            router.push("/notifications");
-          }}
-        >
+        <Pressable onPress={() => router.push("/notifications")}>
           <Ionicons
             name="notifications-outline"
             size={hp(3.2)}
@@ -286,23 +329,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 60,
   },
-  post: {
-    padding: 14,
-    borderRadius: theme.radius?.md ?? 12,
-    borderWidth: 1,
-    borderColor: theme.colors?.gray ?? "#e0e0e0",
-    marginBottom: 14,
-  },
-  postTitle: {
-    fontSize: hp(2),
-    fontWeight: theme.fonts.semibold,
-    color: theme.colors.text,
-    marginBottom: 4,
-  },
-  postContent: {
-    fontSize: hp(1.8),
-    color: theme.colors.textLight,
-  },
   emptyText: {
     textAlign: "center",
     marginTop: 100,
@@ -313,6 +339,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: hp(1.6),
     color: theme.colors.textLight,
+  },
+  footerSpace: {
+    marginVertical: 30,
+    gap: 12,
+  },
+  retryButton: {
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: theme.radius?.sm ?? 8,
+    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+  },
+  retryText: {
+    fontSize: hp(1.8),
+    color: theme.colors.text,
+    fontWeight: theme.fonts.semibold,
   },
   notificationBadge: {
     position: "absolute",

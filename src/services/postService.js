@@ -1,18 +1,24 @@
 import { channelStatusLogger, supabase } from "@/lib/supabase";
 import { api } from "./apiClient";
-import { getUserData } from "./userService";
 
 export const createOrUpdatePost = (postData) => api.post("/posts", postData);
 
-export const fetchPosts = (limit = 10, userName = null) => {
+export const fetchPosts = ({ limit = 10, cursor = null, userName = null } = {}) => {
   const params = new URLSearchParams({ limit: String(limit) });
-  if (userName) {
-    params.append("username", userName);
-  }
+  if (cursor) params.append("cursor", cursor);
+  if (userName) params.append("username", userName);
+
   return api.get(`/posts/?${params.toString()}`);
 };
 
 export const fetchPostById = (postId) => api.get(`/posts/${postId}`);
+
+export const fetchComments = (postId, { limit = 20, cursor = null } = {}) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.append("cursor", cursor);
+
+  return api.get(`/posts/${postId}/comments?${params.toString()}`);
+};
 
 export const createPostLike = (postId) => api.post(`/posts/${postId}/like`);
 
@@ -24,118 +30,53 @@ export const createComment = (comment) =>
 export const deleteComment = (postId, commentId) =>
   api.delete(`/posts/${postId}/comment/${commentId}`);
 
-const getPostsChannelHandler = (setPosts) => {
-  return async (payload) => {
-    if (payload.eventType === "INSERT" && payload?.new?.id) {
-      const newPost = { ...payload.new };
-      const res = await getUserData(newPost.userId);
-      newPost.user = res.success ? res.data : {};
-      setPosts((prevPosts) => [newPost, ...prevPosts]);
-    }
-  };
-};
+// --- realtime -------------------------------------------------------------
+// Channels no longer patch component state by hand (which meant fetching a
+// user per event and rebuilding rows the server had already shaped). They
+// report *that* something changed; the screen invalidates the relevant query
+// and react-query refetches once.
 
-export const subscribeToPosts = (setPosts) => {
-  const existingChannel = supabase
+const replaceChannel = (topic) => {
+  const existing = supabase
     .getChannels()
-    .find((ch) => ch.topic === "realtime:posts");
-  if (existingChannel) {
-    supabase.removeChannel(existingChannel);
+    .find((ch) => ch.topic === `realtime:${topic}`);
+
+  if (existing) {
+    supabase.removeChannel(existing);
   }
-
-  const channel = supabase
-    .channel("posts")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "posts" },
-      getPostsChannelHandler(setPosts),
-    )
-    .subscribe(channelStatusLogger("posts"));
-
-  return channel;
 };
 
-export const subscribeToComments = (postId, setPostDetails) => {
-  const existingChannel = supabase
-    .getChannels()
-    .find((ch) => ch.topic === `realtime:comments:${postId}`);
-  if (existingChannel) {
-    supabase.removeChannel(existingChannel);
-  }
+const changeChannel = (topic, config, onChange) => {
+  replaceChannel(topic);
 
-  const channel = supabase
-    .channel(`comments:${postId}`)
-    .on(
-      "postgres_changes",
-      {
-        event: "*",
-        schema: "public",
-        table: "comments",
-        filter: `postId=eq.${postId}`,
-      },
-      async (payload) => {
-        if (payload.eventType === "INSERT" && payload?.new?.id) {
-          const newComment = { ...payload.new };
-          const res = await getUserData(newComment.userId);
-          newComment.user = res.success ? res.data : {};
-          setPostDetails((prevDetails) => ({
-            ...prevDetails,
-            comments: [newComment, ...(prevDetails?.comments || [])],
-          }));
-        }
-      },
+  return supabase
+    .channel(topic)
+    .on("postgres_changes", { event: "*", schema: "public", ...config }, (payload) =>
+      onChange(payload),
     )
-    .subscribe(channelStatusLogger(`comments:${postId}`));
-
-  return channel;
+    .subscribe(channelStatusLogger(topic));
 };
 
-export const subscribeToAllComments = (setPosts) => {
-  const existingChannel = supabase
-    .getChannels()
-    .find((ch) => ch.topic === "realtime:comments");
-  if (existingChannel) {
-    unsubscribeFromChannel(existingChannel);
-  }
+export const subscribeToPosts = (onChange) =>
+  changeChannel("posts", { table: "posts" }, onChange);
 
-  const channel = supabase
-    .channel("comments")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "comments" },
-      (payload) => {
-        const postId = payload?.new?.postId ?? payload?.old?.postId;
+export const subscribeToComments = (postId, onChange) =>
+  changeChannel(
+    `comments:${postId}`,
+    { table: "comments", filter: `postId=eq.${postId}` },
+    onChange,
+  );
 
-        if (!postId) {
-          return;
-        }
+export const subscribeToAllComments = (onChange) =>
+  changeChannel("comments", { table: "comments" }, onChange);
 
-        setPosts((prevPosts) =>
-          prevPosts.map((post) => {
-            if (post.id !== postId) {
-              return post;
-            }
-
-            const currentCount = post?.comments?.[0]?.count ?? 0;
-            const delta =
-              payload.eventType === "INSERT"
-                ? 1
-                : payload.eventType === "DELETE"
-                  ? -1
-                  : 0;
-
-            return {
-              ...post,
-              comments: [{ count: Math.max(currentCount + delta, 0) }],
-            };
-          }),
-        );
-      },
-    )
-    .subscribe(channelStatusLogger("comments"));
-
-  return channel;
-};
+// Scoped to one post: a feed-wide like channel would fire constantly.
+export const subscribeToPostLikes = (postId, onChange) =>
+  changeChannel(
+    `postLikes:${postId}`,
+    { table: "postLikes", filter: `postId=eq.${postId}` },
+    onChange,
+  );
 
 export const unsubscribeFromChannel = (channel) => {
   if (channel) {
