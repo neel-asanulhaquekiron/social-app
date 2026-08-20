@@ -77,7 +77,7 @@ const PushPermissionPrompt = () => {
       <Ionicons
         name="notifications-outline"
         size={hp(3)}
-        color={theme.colors.primaryDark ?? theme.colors.text}
+        color={theme.colors.primaryDark}
       />
 
       <View style={styles.copy}>
@@ -122,10 +122,10 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
     marginTop: 6,
-    borderRadius: theme.radius?.md ?? 12,
+    borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: theme.colors?.gray ?? "#e5e5e5",
-    backgroundColor: "white",
+    borderColor: theme.colors.gray,
+    backgroundColor: theme.colors.surface,
     flexWrap: "wrap",
   },
   copy: {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: hp(1.9),
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.semiBold,
     color: theme.colors.text,
   },
   body: {
@@ -158,13 +158,13 @@ const styles = StyleSheet.create({
   primary: {
     paddingVertical: 8,
     paddingHorizontal: 16,
-    borderRadius: theme.radius?.sm ?? 8,
+    borderRadius: theme.radius.sm,
     backgroundColor: theme.colors.primary,
   },
   primaryText: {
     fontSize: hp(1.7),
-    fontWeight: theme.fonts.semibold,
-    color: "white",
+    fontWeight: theme.fonts.semiBold,
+    color: theme.colors.onPrimary,
   },
   disabled: {
     opacity: 0.6,

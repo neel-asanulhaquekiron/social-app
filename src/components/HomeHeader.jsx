@@ -22,11 +22,7 @@ const HomeHeader = ({ notificationCount, showFilter, onToggleFilter }) => {
           <Ionicons
             name={showFilter ? "filter" : "filter-outline"}
             size={hp(3.2)}
-            color={
-              showFilter
-                ? (theme.colors.primaryDark ?? theme.colors.text)
-                : theme.colors.text
-            }
+            color={showFilter ? theme.colors.primaryDark : theme.colors.text}
           />
         </Pressable>
 
@@ -111,7 +107,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.roseLight,
   },
   notificationBadgeText: {
-    color: "white",
+    color: theme.colors.onPrimary,
     fontSize: hp(1.2),
     fontWeight: theme.fonts.bold,
   },

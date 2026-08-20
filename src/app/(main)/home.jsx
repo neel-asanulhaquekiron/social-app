@@ -65,7 +65,7 @@ const Home = () => {
   );
 
   return (
-    <ScreenWrapper bg="white" scrollable={false}>
+    <ScreenWrapper bg={theme.colors.background} scrollable={false}>
       <View style={styles.container}>
         <HomeHeader
           notificationCount={notificationCount}
@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: theme.radius?.sm ?? 8,
-    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.gray,
   },
   retryText: {
     fontSize: hp(1.8),
     color: theme.colors.text,
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.semiBold,
   },
   filterContainer: {
     position: "relative",
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   clearButtonText: {
-    color: theme.colors?.rose ?? "red",
+    color: theme.colors.rose,
     fontSize: hp(1.8),
     fontWeight: theme.fonts.bold,
   },
