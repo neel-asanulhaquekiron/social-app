@@ -13,11 +13,22 @@ class PostValidator {
   });
 
   /**
-   * GET /posts?limit=10&username=john
+   * GET /posts?limit=10&cursor=<opaque>&username=john
    */
   static fetchPostsQuerySchema = z.object({
-    limit: z.coerce.number().int().positive().max(100).optional(),
+    limit: z.coerce.number().int().positive().max(50).optional(),
+    // Opaque keyset cursor produced by the previous page; an unusable value
+    // is ignored by the model rather than erroring.
+    cursor: z.string().trim().max(200).optional(),
     username: z.string().trim().optional(),
+  });
+
+  /**
+   * GET /posts/:postId/comments?limit=20&cursor=<opaque>
+   */
+  static fetchCommentsQuerySchema = z.object({
+    limit: z.coerce.number().int().positive().max(50).optional(),
+    cursor: z.string().trim().max(200).optional(),
   });
 
   /**

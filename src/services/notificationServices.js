@@ -6,22 +6,28 @@ export const markNotificationAsClicked = (notificationId) =>
   api.patch(`/notifications/${notificationId}/clicked`);
 
 // Notifications for the authenticated user (derived from the token server-side).
-export const fetchNotifications = () => api.get("/notifications");
+export const fetchNotifications = ({ limit = 20, cursor = null } = {}) => {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.append("cursor", cursor);
+
+  return api.get(`/notifications?${params.toString()}`);
+};
 
 export const markNotificationsSeen = () => api.post("/notifications/mark-seen");
 
 export const getUnseenNotificationCount = () =>
   api.get("/notifications/unseen-count");
 
-export const subscribeToNotifications = (userId, setNotificationCount) => {
+export const subscribeToNotifications = (userId, onChange) => {
   const existingChannel = supabase
     .getChannels()
     .find((ch) => ch.topic === `realtime:notifications:${userId}`);
+
   if (existingChannel) {
     unsubscribeFromChannel(existingChannel);
   }
 
-  const channel = supabase
+  return supabase
     .channel(`notifications:${userId}`)
     .on(
       "postgres_changes",
@@ -31,13 +37,7 @@ export const subscribeToNotifications = (userId, setNotificationCount) => {
         table: "notifications",
         filter: `receiverId=eq.${userId}`,
       },
-      async (payload) => {
-        if (payload.eventType === "INSERT" && payload?.new?.id) {
-          setNotificationCount((prevCount) => prevCount + 1);
-        }
-      },
+      (payload) => onChange(payload),
     )
     .subscribe(channelStatusLogger(`notifications:${userId}`));
-
-  return channel;
 };

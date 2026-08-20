@@ -1,7 +1,9 @@
 import Avatar from "@/components/Avatar";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { queryKeys } from "@/lib/queryClient";
 import { markNotificationAsClicked } from "@/services/notificationServices";
+import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -16,26 +18,40 @@ const parseNotificationData = (data) => {
   }
 };
 
-const NotificationItem = ({ item, router, setNotifications }) => {
+const NotificationItem = ({ item, router }) => {
+  const queryClient = useQueryClient();
   const { id, title, data, sender, created_at, isClicked } = item || {};
   const createdAt = moment(created_at).format("MMM D");
+
+  /** Flips isClicked in the cached pages so the row updates immediately. */
+  const markClickedInCache = () =>
+    queryClient.setQueryData(queryKeys.notifications, (old) =>
+      old?.pages
+        ? {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: page.data.map((notification) =>
+                notification.id === id
+                  ? { ...notification, isClicked: true }
+                  : notification,
+              ),
+            })),
+          }
+        : old,
+    );
 
   const handleClick = async () => {
     const parsed = parseNotificationData(data);
     const { postId, commentId } = parsed;
     router.push({ pathname: "/postDetails", params: { postId, commentId } });
+
     if (!isClicked && id) {
-      setNotifications((prevNotifications) =>
-        prevNotifications.map((notification) =>
-          notification.id === id
-            ? { ...notification, isClicked: true }
-            : notification,
-        ),
-      );
-      try {
-        await markNotificationAsClicked(id);
-      } catch (error) {
-        console.error("Error marking notification as clicked:", error);
+      markClickedInCache();
+
+      const result = await markNotificationAsClicked(id);
+      if (!result.success) {
+        console.error("Error marking notification as clicked:", result.msg);
       }
     }
   };

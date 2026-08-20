@@ -7,14 +7,26 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
+import { patchCommentCount } from "@/lib/postCache";
+import { queryKeys, unwrap } from "@/lib/queryClient";
 import {
   createComment,
   deleteComment,
+  fetchComments,
   fetchPostById,
+  subscribeToComments,
+  subscribeToPostLikes,
+  unsubscribeFromChannel,
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   Alert,
   Pressable,
@@ -24,87 +36,112 @@ import {
   View,
 } from "react-native";
 
+const COMMENTS_PAGE_SIZE = 20;
+
 const PostDetails = () => {
   const { postId, commentId } = useLocalSearchParams();
   const { user } = useAuth();
   const router = useRouter();
-  const inputRef = useRef("");
+  const queryClient = useQueryClient();
+  const inputRef = useRef(null);
   const commentRef = useRef("");
-  const [startLoading, setStartLoading] = useState(true);
-  const [postDetails, setPostDetails] = useState(null);
-  const [sendingComment, setSendingComment] = useState(false);
 
-  const getPostDetails = async () => {
-    // The API answers { success, data, msg } — the old `{ error }` check was
-    // always falsy, so a failed fetch silently rendered an empty post.
-    const { success, data, msg } = await fetchPostById(postId);
+  const {
+    data: postDetails,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.post(postId),
+    queryFn: async () => unwrap(await fetchPostById(postId)).data,
+    enabled: !!postId,
+  });
 
-    if (!success) {
-      console.error("Error fetching post details:", msg);
-      setStartLoading(false);
-      return;
-    }
+  // Comments live behind their own cursor-paginated endpoint now, so opening
+  // a post with thousands of comments no longer ships them all at once.
+  const {
+    data: commentPages,
+    isLoading: commentsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.comments(postId),
+    queryFn: async ({ pageParam }) => {
+      const result = unwrap(
+        await fetchComments(postId, {
+          limit: COMMENTS_PAGE_SIZE,
+          cursor: pageParam,
+        }),
+      );
+      return { data: result.data ?? [], nextCursor: result.nextCursor ?? null };
+    },
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled: !!postId,
+  });
 
-    setPostDetails(data);
-    setStartLoading(false);
-  };
+  const comments = commentPages?.pages.flatMap((page) => page.data) ?? [];
 
-  const onNewComment = async () => {
-    if (!commentRef.current) {
-      return;
-    }
-    const text = commentRef.current.trim();
+  useEffect(() => {
+    if (!postId) return undefined;
 
-    if (!text) {
-      return;
-    }
+    const commentChannel = subscribeToComments(postId, () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) }),
+    );
+    const likeChannel = subscribeToPostLikes(postId, () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.post(postId) }),
+    );
 
-    const data = {
-      postId: postDetails?.id,
-      text,
+    return () => {
+      unsubscribeFromChannel(commentChannel);
+      unsubscribeFromChannel(likeChannel);
     };
+  }, [postId, queryClient]);
 
-    setSendingComment(true);
-    const { success, data: newComment, msg } = await createComment(data);
-    setSendingComment(false);
+  const { mutate: submitComment, isPending: sendingComment } = useMutation({
+    mutationFn: (text) => createComment({ postId: Number(postId), text }),
+    onSuccess: (result) => {
+      if (!result.success) {
+        Alert.alert("Comment", result.msg || "Something went wrong");
+        return;
+      }
 
-    if (success) {
       // The server creates the owner's notification + push after a comment.
       inputRef?.current?.clear();
       commentRef.current = "";
-      setPostDetails((prevDetails) => ({
-        ...prevDetails,
-        comments: [
-          { ...newComment, user: { ...user } },
-          ...(prevDetails?.comments ?? []),
-        ],
-      }));
-    } else {
-      Alert.alert("Comment", msg || "Something went wrong");
+      queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+      patchCommentCount(queryClient, postId, 1);
+    },
+    onError: (mutationError) =>
+      Alert.alert("Comment", mutationError.message || "Something went wrong"),
+  });
+
+  const { mutate: removeComment } = useMutation({
+    mutationFn: (comment) => deleteComment(postId, comment?.id),
+    onSuccess: (result) => {
+      if (!result.success) {
+        Alert.alert("Comment", result.msg || "Something went wrong");
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
+      patchCommentCount(queryClient, postId, -1);
+    },
+    onError: (mutationError) =>
+      Alert.alert("Comment", mutationError.message || "Something went wrong"),
+  });
+
+  const onNewComment = () => {
+    const text = commentRef.current?.trim();
+    if (!text) {
+      return;
     }
+    submitComment(text);
   };
 
-  const onDeleteComment = async (comment) => {
-    const { success, msg } = await deleteComment(postId, comment?.id);
-    if (success) {
-      setPostDetails((prevDetails) => ({
-        ...prevDetails,
-        comments: prevDetails?.comments?.filter((c) => c?.id !== comment?.id),
-      }));
-    } else {
-      Alert.alert("Comment", msg || "Something went wrong");
-    }
-  };
-
-  useEffect(() => {
-    // const commentChannel = subscribeToComments(postId, setPostDetails);
-    getPostDetails();
-    // return () => {
-    //   unsubscribeFromChannel(commentChannel);
-    // };
-  }, []);
-
-  if (startLoading) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <Loading />
@@ -116,21 +153,31 @@ const PostDetails = () => {
     <ScreenWrapper bg="white">
       <View style={styles.container}>
         <Header title="Post Details" showBackButton={true} />
-        {!postDetails && (
+
+        {isError && (
           <View style={styles.loadingContainer}>
-            <Text>Post not found</Text>
+            <Text style={styles.mutedText}>
+              {error?.message || "Post not found"}
+            </Text>
+            <Pressable onPress={() => refetch()} style={styles.retryButton}>
+              <Text style={styles.retryText}>Try again</Text>
+            </Pressable>
           </View>
         )}
+
+        {!isError && !postDetails && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.mutedText}>Post not found</Text>
+          </View>
+        )}
+
         {postDetails && (
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
           >
             <PostCard
-              item={{
-                ...postDetails,
-                comments: [{ count: postDetails?.comments?.length }],
-              }}
+              item={postDetails}
               currentUser={user}
               router={router}
               hasShadow={false}
@@ -162,27 +209,39 @@ const PostDetails = () => {
             </View>
 
             {/* comment list */}
-            <View style={{ gap: 20, marginVertical: 15 }}>
-              {postDetails?.comments?.length > 0 &&
-                postDetails?.comments?.map((comment) => (
-                  <CommentItem
-                    item={comment}
-                    key={comment?.id?.toString()}
-                    canDelete={
-                      comment?.userId === user?.id ||
-                      postDetails?.userId === user?.id
-                    }
-                    onDelete={onDeleteComment}
-                    highlight={comment?.id == commentId}
-                  />
-                ))}
+            <View style={styles.commentList}>
+              {comments.map((comment) => (
+                <CommentItem
+                  item={comment}
+                  key={comment?.id?.toString()}
+                  canDelete={
+                    comment?.userId === user?.id ||
+                    postDetails?.userId === user?.id
+                  }
+                  onDelete={removeComment}
+                  highlight={String(comment?.id) === String(commentId)}
+                />
+              ))}
 
-              {postDetails?.comments?.length === 0 && (
-                <Text
-                  style={{ textAlign: "center", color: theme.colors.textLight }}
-                >
+              {commentsLoading && <Loading size="small" />}
+
+              {!commentsLoading && comments.length === 0 && (
+                <Text style={styles.mutedText}>
                   Be the first to comment on this post!
                 </Text>
+              )}
+
+              {hasNextPage && (
+                <Pressable
+                  onPress={() => !isFetchingNextPage && fetchNextPage()}
+                  style={styles.loadMoreButton}
+                >
+                  {isFetchingNextPage ? (
+                    <Loading size="small" />
+                  ) : (
+                    <Text style={styles.retryText}>Load more comments</Text>
+                  )}
+                </Pressable>
               )}
             </View>
           </ScrollView>
@@ -199,6 +258,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    gap: 12,
   },
   container: {
     flex: 1,
@@ -217,6 +277,33 @@ const styles = StyleSheet.create({
   commentInput: {
     flex: 1,
     height: hp(6.2),
+  },
+  commentList: {
+    gap: 20,
+    marginVertical: 15,
+  },
+  mutedText: {
+    textAlign: "center",
+    color: theme.colors.textLight,
+  },
+  retryButton: {
+    alignSelf: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: theme.radius?.sm ?? 8,
+    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+  },
+  loadMoreButton: {
+    alignSelf: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: theme.radius?.sm ?? 8,
+    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+  },
+  retryText: {
+    fontSize: hp(1.8),
+    color: theme.colors.text,
+    fontWeight: theme.fonts.semibold,
   },
   sendIcon: {
     height: hp(5.8),

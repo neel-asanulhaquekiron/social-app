@@ -23,9 +23,13 @@ class NotificationController {
     sendResult(res, result);
   }
 
-  // GET /notifications — for the authenticated user.
+  // GET /notifications?limit=&cursor= — for the authenticated user.
   static async list(req, res) {
-    const result = await Notification.fetchNotifications(req.user.id);
+    const { limit = 20, cursor = null } = req.validated?.query ?? {};
+    const result = await Notification.fetchNotifications(req.user.id, {
+      limit,
+      cursor,
+    });
     sendResult(res, result);
   }
 }
