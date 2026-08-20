@@ -7,8 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "environment": "development",
-      "channel": "development"
+      "environment": "development"
     },
     "development-simulator": {
       "extends": "development",
@@ -18,13 +17,11 @@
     },
     "preview": {
       "distribution": "internal",
-      "environment": "preview",
-      "channel": "preview"
+      "environment": "preview"
     },
     "production": {
       "autoIncrement": true,
-      "environment": "production",
-      "channel": "production"
+      "environment": "production"
     }
   },
   "submit": {
