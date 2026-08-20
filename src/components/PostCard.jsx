@@ -22,7 +22,10 @@ const PostCard = ({
   const router = useRouter();
   const { toggleLike, isPending: likePending } = useLike(item?.id);
   const [expanded, setExpanded] = useState(false);
-  const [showSeeMore, setShowSeeMore] = useState(false);
+  // null = not measured yet. Once measured the hidden clone below is dropped,
+  // so each card pays for the extra text layout exactly once instead of on
+  // every re-render.
+  const [needsSeeMore, setNeedsSeeMore] = useState(null);
 
   const liked = !!item?.likedByMe;
   const likeCount = item?.likeCount ?? 0;
@@ -40,9 +43,7 @@ const PostCard = ({
   };
 
   const onTextLayout = (e) => {
-    if (!expanded) {
-      setShowSeeMore(e.nativeEvent.lines.length > MAX_LINES);
-    }
+    setNeedsSeeMore(e.nativeEvent.lines.length > MAX_LINES);
   };
 
   return (
@@ -69,8 +70,9 @@ const PostCard = ({
               {item.body}
             </Text>
 
-            {/* Hidden, unclamped clone — used only to measure true line count */}
-            {!expanded && (
+            {/* Unclamped clone used only to count the real number of lines.
+                Rendered until the answer is known, then never again. */}
+            {needsSeeMore === null && (
               <Text
                 style={[styles.content, styles.hiddenMeasure]}
                 onTextLayout={onTextLayout}
@@ -79,8 +81,13 @@ const PostCard = ({
               </Text>
             )}
 
-            {showSeeMore && (
-              <TouchableOpacity onPress={toggleExpanded}>
+            {needsSeeMore && (
+              <TouchableOpacity
+                onPress={toggleExpanded}
+                accessibilityRole="button"
+                accessibilityLabel={expanded ? "See less" : "See more"}
+                hitSlop={8}
+              >
                 <Text style={styles.seeMoreText}>
                   {expanded ? "See less" : "See more"}
                 </Text>
