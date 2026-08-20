@@ -46,7 +46,7 @@ const SignUp = () => {
       <StatusBar style="dark" />
       <View style={styles.container}>
         <View>
-          <Text style={styles.title}>Let's, </Text>
+          <Text style={styles.title}>Let’s, </Text>
           <Text style={styles.title}>Get Started</Text>
         </View>
         <Text style={styles.subtitle}>

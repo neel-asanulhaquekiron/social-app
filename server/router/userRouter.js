@@ -15,7 +15,11 @@ router.post(
   asyncHandler(UserController.registerPushToken),
 );
 
-router.delete("/pushToken", auth, asyncHandler(UserController.unregisterPushToken));
+router.delete(
+  "/pushToken",
+  auth,
+  asyncHandler(UserController.unregisterPushToken),
+);
 
 router.get("/me", auth, asyncHandler(UserController.getMe));
 

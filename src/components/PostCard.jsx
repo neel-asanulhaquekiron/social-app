@@ -14,7 +14,11 @@ const MAX_LINES = 6;
  * Presentational post row. Navigation and the like mutation come from hooks
  * used in place, so nothing has to be drilled down from the list screens.
  */
-const PostCard = ({ item, hasShadow = true, disableDetailsNavigation = false }) => {
+const PostCard = ({
+  item,
+  hasShadow = true,
+  disableDetailsNavigation = false,
+}) => {
   const router = useRouter();
   const { toggleLike, isPending: likePending } = useLike(item?.id);
   const [expanded, setExpanded] = useState(false);
