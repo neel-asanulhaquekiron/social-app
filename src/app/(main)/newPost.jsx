@@ -5,7 +5,9 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
+import { queryKeys } from "@/lib/queryClient";
 import { createOrUpdatePost } from "@/services/postService";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -20,6 +22,7 @@ import {
 const NewPost = () => {
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const bodyRef = useRef("");
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +39,10 @@ const NewPost = () => {
     setLoading(false);
 
     if (res.success) {
+      // Show the new post immediately instead of waiting for the realtime
+      // event to land.
+      queryClient.invalidateQueries({ queryKey: queryKeys.allPosts });
+
       if (router.canGoBack()) {
         router.back();
       } else {

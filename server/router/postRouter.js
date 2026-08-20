@@ -13,16 +13,26 @@ router.post(
   asyncHandler(postController.createOrUpdatePost),
 );
 
+// Public, but a valid token is used when present so `likedByMe` is accurate.
 router.get(
   "/",
+  auth.optional,
   validate(PostValidator.fetchPostsQuerySchema, "query"),
   asyncHandler(postController.fetchPosts),
 );
 
 router.get(
   "/:postId",
+  auth.optional,
   validate(PostValidator.postIdParamsSchema, "params"),
   asyncHandler(postController.fetchPostById),
+);
+
+router.get(
+  "/:postId/comments",
+  validate(PostValidator.postIdParamsSchema, "params"),
+  validate(PostValidator.fetchCommentsQuerySchema, "query"),
+  asyncHandler(postController.fetchComments),
 );
 
 router.post(

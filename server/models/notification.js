@@ -1,5 +1,6 @@
 const supabase = require("../config/db.js");
 const { ok, fail, dbError } = require("../utils/result");
+const { applyKeyset, ordered, toPage } = require("../utils/cursor");
 
 class Notification {
   static async markNotificationAsClicked(notificationId, receiverId) {
@@ -44,19 +45,26 @@ class Notification {
     }
   }
 
-  static async fetchNotifications(receiverId) {
+  static async fetchNotifications(receiverId, { limit = 20, cursor = null } = {}) {
     try {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("*, sender: senderId (id, name)")
-        .eq("receiverId", receiverId)
-        .order("created_at", { ascending: false });
+      const query = applyKeyset(
+        ordered(
+          supabase
+            .from("notifications")
+            .select("*, sender: senderId (id, name)")
+            .eq("receiverId", receiverId),
+        ).limit(limit + 1),
+        cursor,
+      );
+
+      const { data, error } = await query;
 
       if (error) {
         return dbError("fetching notifications", error);
       }
 
-      return ok({ data });
+      const { items, nextCursor } = toPage(data ?? [], limit);
+      return ok({ data: items, nextCursor });
     } catch (error) {
       return dbError("fetching notifications", error);
     }

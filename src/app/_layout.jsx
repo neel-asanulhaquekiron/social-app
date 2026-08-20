@@ -1,6 +1,8 @@
 import NotificationDeepLink from "@/components/NotificationDeepLink";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { queryClient } from "@/lib/queryClient";
 import { registerPushToken } from "@/services/authService";
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
   isExpoGoAndroid,
   setNotificationHandler,
@@ -15,9 +17,11 @@ setNotificationHandler();
 
 const _layout = () => {
   return (
-    <AuthProvider>
-      <MainLayout />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <MainLayout />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 
