@@ -24,7 +24,13 @@ const Button = ({
 
   if (loading) {
     return (
-      <View style={[styles.button, buttonStyle, { backgroundColor: "white" }]}>
+      <View
+        style={[
+          styles.button,
+          buttonStyle,
+          { backgroundColor: theme.colors.surface },
+        ]}
+      >
         <Loading />
       </View>
     );
@@ -53,7 +59,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: hp(2.5),
-    color: "white",
+    color: theme.colors.onPrimary,
     fontWeight: theme.fonts.bold,
   },
 });

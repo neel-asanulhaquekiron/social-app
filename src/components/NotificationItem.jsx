@@ -83,14 +83,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 14,
-    backgroundColor: "white",
+    backgroundColor: theme.colors.surface,
     borderWidth: 1,
-    borderColor: theme.colors?.gray ?? "#e5e5e5",
-    borderRadius: theme.radius?.lg ?? 16,
+    borderColor: theme.colors.gray,
+    borderRadius: theme.radius.lg,
     marginBottom: 12,
   },
   notClicked: {
-    backgroundColor: theme.colors.primaryLight ?? "#e0f7fa",
+    backgroundColor: theme.colors.primaryLight,
   },
   nameTitle: {
     flex: 1,

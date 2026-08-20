@@ -45,6 +45,10 @@ const PostDetails = () => {
   const queryClient = useQueryClient();
   const inputRef = useRef(null);
   const commentRef = useRef("");
+  const scrollRef = useRef(null);
+  // Only scroll to the deep-linked comment once, and only if it is on a page
+  // that has actually loaded.
+  const scrolledToComment = useRef(false);
 
   const {
     data: postDetails,
@@ -136,6 +140,16 @@ const PostDetails = () => {
       Alert.alert("Comment", mutationError.message || "Something went wrong"),
   });
 
+  // Opening a post from a notification highlights the relevant comment; bring
+  // it into view rather than leaving the user to hunt for it.
+  const onHighlightedCommentLayout = (event) => {
+    if (scrolledToComment.current) return;
+    scrolledToComment.current = true;
+
+    const y = event?.nativeEvent?.layout?.y ?? 0;
+    scrollRef.current?.scrollTo({ y: Math.max(y - 80, 0), animated: true });
+  };
+
   const onNewComment = () => {
     const text = commentRef.current?.trim();
     if (!text) {
@@ -153,7 +167,7 @@ const PostDetails = () => {
   }
 
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <View style={styles.container}>
         <Header title="Post Details" showBackButton={true} />
 
@@ -174,6 +188,7 @@ const PostDetails = () => {
 
         {postDetails && (
           <ScrollView
+            ref={scrollRef}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContainer}
           >
@@ -201,7 +216,7 @@ const PostDetails = () => {
                   <Ionicons
                     name="send"
                     size={hp(2.4)}
-                    color={theme.colors.primaryDark ?? theme.colors.text}
+                    color={theme.colors.primaryDark}
                   />
                 </Pressable>
               )}
@@ -219,6 +234,11 @@ const PostDetails = () => {
                   }
                   onDelete={removeComment}
                   highlight={String(comment?.id) === String(commentId)}
+                  onLayout={
+                    String(comment?.id) === String(commentId)
+                      ? onHighlightedCommentLayout
+                      : undefined
+                  }
                 />
               ))}
 
@@ -291,28 +311,28 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingVertical: 8,
     paddingHorizontal: 20,
-    borderRadius: theme.radius?.sm ?? 8,
-    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.gray,
   },
   loadMoreButton: {
     alignSelf: "center",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: theme.radius?.sm ?? 8,
-    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.gray,
   },
   retryText: {
     fontSize: hp(1.8),
     color: theme.colors.text,
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.semiBold,
   },
   sendIcon: {
     height: hp(5.8),
     width: hp(5.8),
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: theme.radius?.lg ?? 16,
+    borderRadius: theme.radius.lg,
     borderWidth: 1,
-    borderColor: theme.colors?.gray ?? "#e0e0e0",
+    borderColor: theme.colors.gray,
   },
 });

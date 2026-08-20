@@ -13,7 +13,7 @@ const Profile = () => {
   const { user } = useAuth();
 
   return (
-    <ScreenWrapper bg="white">
+    <ScreenWrapper bg={theme.colors.background}>
       <UserHeader user={user} handleLogout={handleLogOut} />
     </ScreenWrapper>
   );
@@ -117,12 +117,12 @@ const styles = StyleSheet.create({
   settingsButton: {
     paddingVertical: 8,
     paddingHorizontal: 18,
-    borderRadius: theme.radius?.sm ?? 8,
-    backgroundColor: theme.colors?.gray ?? "#e5e5e5",
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.gray,
   },
   settingsText: {
     fontSize: hp(1.7),
-    fontWeight: theme.fonts.semibold,
+    fontWeight: theme.fonts.semiBold,
     color: theme.colors.text,
   },
   info: {
