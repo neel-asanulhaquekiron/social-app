@@ -4,22 +4,17 @@ import Input from "@/components/Input";
 import PostCard from "@/components/PostCard";
 import PushPermissionPrompt from "@/components/PushPermissionPrompt";
 import ScreenWrapper from "@/components/ScreenWrapper";
-import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import { useFeed } from "@/hooks/useFeed";
 import { useRealtimeFeed } from "@/hooks/useRealtimeFeed";
 import { useUnseenCount } from "@/hooks/useUnseenCount";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useCallback, useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { FlatList, Pressable, RefreshControl, Text, View } from "react-native";
 
 const Home = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const [showFilter, setShowFilter] = useState(false);
 
   const {
@@ -125,7 +120,7 @@ const Home = () => {
 
 export default Home;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     paddingHorizontal: wp(4),
@@ -164,13 +159,12 @@ const styles = StyleSheet.create({
   filterContainer: {
     position: "relative",
     width: "100%",
-    height: hp(5.8),
+    minHeight: hp(5.8),
     justifyContent: "center",
     marginVertical: 5,
   },
   filterInput: {
     width: "100%",
-    height: "100%",
     fontSize: hp(1.8),
     color: theme.colors.text,
     paddingLeft: 0,
@@ -189,4 +183,4 @@ const styles = StyleSheet.create({
     fontSize: hp(1.8),
     fontWeight: theme.fonts.bold,
   },
-});
+}));

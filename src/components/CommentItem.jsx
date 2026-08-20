@@ -1,9 +1,9 @@
 import Avatar from "@/components/Avatar";
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
 import { formatShortDate } from "@/helpers/date";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 
 const CommentItem = ({
   item,
@@ -12,6 +12,8 @@ const CommentItem = ({
   highlight = false,
   onLayout,
 }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const createdAt = formatShortDate(item?.created_at);
 
   const handleDelete = () => {
@@ -36,7 +38,13 @@ const CommentItem = ({
             <Text style={styles.time}>{createdAt}</Text>
           </View>
           {canDelete && (
-            <Pressable onPress={handleDelete} style={styles.deleteIcon}>
+            <Pressable
+              onPress={handleDelete}
+              style={styles.deleteIcon}
+              accessibilityRole="button"
+              accessibilityLabel="Delete comment"
+              hitSlop={12}
+            >
               <Ionicons name="trash-outline" size={hp(2)} color="#ff3333" />
             </Pressable>
           )}
@@ -49,7 +57,7 @@ const CommentItem = ({
 
 export default CommentItem;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -102,4 +110,4 @@ const styles = StyleSheet.create({
   deleteIcon: {
     paddingTop: 4,
   },
-});
+}));

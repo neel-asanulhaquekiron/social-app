@@ -1,12 +1,12 @@
 import Avatar from "@/components/Avatar";
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
 import { formatShortDate } from "@/helpers/date";
 import { queryKeys } from "@/lib/queryClient";
 import { markNotificationAsClicked } from "@/services/notificationServices";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 
 // `data` is jsonb from the API (object); tolerate legacy JSON strings too.
 const parseNotificationData = (data) => {
@@ -20,6 +20,8 @@ const parseNotificationData = (data) => {
 };
 
 const NotificationItem = ({ item }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id, title, data, sender, created_at, isClicked } = item || {};
@@ -62,6 +64,9 @@ const NotificationItem = ({ item }) => {
     <TouchableOpacity
       style={[styles.container, !isClicked && styles.notClicked]}
       onPress={handleClick}
+      accessibilityRole="button"
+      accessibilityLabel={`${sender?.name ?? "Someone"} ${title}`}
+      accessibilityState={{ selected: !isClicked }}
     >
       <Avatar size={hp(5)} color={theme.colors.textLight} />
 
@@ -77,7 +82,7 @@ const NotificationItem = ({ item }) => {
 
 export default NotificationItem;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -109,4 +114,4 @@ const styles = StyleSheet.create({
     fontSize: hp(1.4),
     color: theme.colors.text,
   },
-});
+}));
