@@ -10,7 +10,7 @@ router.post(
   "/",
   auth,
   validate(PostValidator.createPostSchema),
-  asyncHandler(postController.createOrUpdatePost),
+  asyncHandler(postController.createPost),
 );
 
 // Public, but a valid token is used when present so `likedByMe` is accurate.
@@ -38,21 +38,21 @@ router.get(
 router.post(
   "/:postId/like",
   auth,
-  validate(PostValidator.likePostParamsSchema, "params"),
+  validate(PostValidator.postIdParamsSchema, "params"),
   asyncHandler(postController.createPostLike),
 );
 
 router.delete(
   "/:postId/like",
   auth,
-  validate(PostValidator.likePostParamsSchema, "params"),
+  validate(PostValidator.postIdParamsSchema, "params"),
   asyncHandler(postController.removePostLike),
 );
 
 router.post(
   "/:postId/comment",
   auth,
-  validate(PostValidator.createCommentParamsSchema, "params"),
+  validate(PostValidator.postIdParamsSchema, "params"),
   validate(PostValidator.createCommentBodySchema),
   asyncHandler(postController.createComment),
 );
