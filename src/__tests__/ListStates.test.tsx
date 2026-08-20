@@ -1,5 +1,6 @@
 import {
   EmptyState,
+  EndMessage,
   ErrorState,
   ListState,
   LoadingState,
@@ -71,7 +72,8 @@ describe("ListState", () => {
   it("shows the end message once a populated list is exhausted", () => {
     const el = renderState({});
 
-    expect(el.props.children).toBe("No more posts");
+    expect(el.type).toBe(EndMessage);
+    expect(el.props.message).toBe("No more posts");
   });
 
   it("renders nothing at the end when no end message is given", () => {

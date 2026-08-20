@@ -1,11 +1,11 @@
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
 import { formatShortDate } from "@/helpers/date";
 import { useLike } from "@/hooks/useLike";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { memo, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import Avatar from "./Avatar";
 
 const MAX_LINES = 6;
@@ -19,6 +19,8 @@ const PostCard = ({
   hasShadow = true,
   disableDetailsNavigation = false,
 }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const router = useRouter();
   const { toggleLike, isPending: likePending } = useLike(item?.id);
   const [expanded, setExpanded] = useState(false);
@@ -143,7 +145,7 @@ const PostCard = ({
 // Rows only re-render when their own post object changes identity.
 export default memo(PostCard);
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.lg,
@@ -216,4 +218,4 @@ const styles = StyleSheet.create({
     opacity: 0,
     zIndex: -1,
   },
-});
+}));

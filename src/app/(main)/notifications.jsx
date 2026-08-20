@@ -1,11 +1,11 @@
 import Header from "@/components/Header";
 import { ListState } from "@/components/ListStates";
-import { theme } from "@/constants/theme";
 import NotificationItem from "@/components/NotificationItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { queryKeys, unwrap } from "@/lib/queryClient";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import {
   fetchNotifications,
   markNotificationsSeen,
@@ -16,11 +16,13 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, View } from "react-native";
 
 const PAGE_SIZE = 20;
 
 const Notifications = () => {
+  const styles = useStyles();
+  const theme = useTheme();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -117,7 +119,7 @@ const Notifications = () => {
 
 export default Notifications;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flex: 1,
     backgroundColor: theme.colors.surface,
@@ -128,4 +130,4 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     gap: 5,
   },
-});
+}));

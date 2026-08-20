@@ -1,8 +1,8 @@
-import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, TextInput, View } from "react-native";
 
 // Props are destructured rather than spread wholesale: the old version passed
 // `containerStyle`, `icon` and `ref` straight through to TextInput, and set
@@ -16,6 +16,8 @@ const Input = ({
   secureTextEntry,
   ...props
 }) => {
+  const styles = useStyles();
+  const theme = useTheme();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const isPasswordField = secureTextEntry !== undefined;
 
@@ -51,11 +53,12 @@ const Input = ({
 
 export default Input;
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((theme) => ({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    height: hp(7.2),
+    minHeight: hp(7.2),
+    paddingVertical: 4,
     borderWidth: 1,
     borderColor: theme.colors.text,
     borderRadius: theme.radius.xxl,
@@ -68,4 +71,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.text,
   },
-});
+}));
