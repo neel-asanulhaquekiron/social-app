@@ -21,14 +21,5 @@ const supabase = createClient(
   noSession,
 );
 
-// GoTrue-only client (signUp / signInWithPassword). Uses the anon /
-// publishable key, exactly like the mobile app would.
-const supabaseAuth = createClient(
-  env.SUPABASE_URL,
-  env.SUPABASE_ANON_KEY,
-  noSession,
-);
-
 module.exports = supabase;
 module.exports.supabase = supabase;
-module.exports.supabaseAuth = supabaseAuth;
