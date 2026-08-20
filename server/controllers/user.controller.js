@@ -4,7 +4,18 @@ const { sendResult } = require("../utils/result");
 class UserController {
   // GET /users/me — full profile of the caller.
   static async getMe(req, res) {
-    const result = await User.getUserData(req.user.id, { includePrivate: true });
+    let result = await User.getUserData(req.user.id, { includePrivate: true });
+
+    // The DB trigger creates the profile row on signup; if it's ever missing,
+    // recreate it from the verified token claims instead of failing.
+    if (!result.success && result.code === "not_found") {
+      result = await User.ensureProfile({
+        id: req.user.id,
+        email: req.user.email,
+        name: req.user.name,
+      });
+    }
+
     sendResult(res, result);
   }
 

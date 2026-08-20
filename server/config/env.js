@@ -12,8 +12,6 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_ANON_KEY: z.string().min(1),
-  JWT_SECRET: z.string().min(32, "JWT_SECRET should be at least 32 characters"),
   // Comma-separated list of allowed browser origins (Expo web / admin tools).
   // Native apps do not send an Origin header and are unaffected.
   CORS_ORIGINS: z.string().optional().default(""),

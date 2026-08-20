@@ -11,7 +11,6 @@ const pinoHttp = require("pino-http");
 const postRouter = require("./router/postRouter.js");
 const userRouter = require("./router/userRouter.js");
 const notificationRouter = require("./router/notificationRouter.js");
-const authRouter = require("./router/authRouter.js");
 const { notFound, errorHandler } = require("./middlewares/errorHandler.js");
 
 const app = express();
@@ -72,21 +71,12 @@ app.use(
   }),
 );
 
-// Tight limiter for credential endpoints: auth is proxied through this server,
-// so GoTrue only sees our IP — we must throttle brute force ourselves.
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 20,
-  standardHeaders: "draft-8",
-  legacyHeaders: false,
-  message: jsonLimitResponse,
-});
-
 app.get("/health", (req, res) => {
   res.json({ status: "ok", uptime: Math.round(process.uptime()) });
 });
 
-app.use("/auth", authLimiter, authRouter);
+// Auth (signup/login) now goes straight from the app to Supabase Auth, which
+// sees real client IPs and applies its own rate limits — no proxy needed here.
 app.use("/posts", postRouter);
 app.use("/users", userRouter);
 app.use("/notifications", notificationRouter);

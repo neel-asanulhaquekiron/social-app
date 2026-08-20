@@ -1,9 +1,6 @@
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import {
-  getStoredUser,
-  getToken,
-  registerPushToken,
-} from "@/services/authService";
+import { supabase } from "@/lib/supabase";
+import { registerPushToken, toAuthUser } from "@/services/authService";
 import {
   addNotificationResponseListener,
   setNotificationHandler,
@@ -67,11 +64,11 @@ const MainLayout = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = await getToken();
-      const user = await getStoredUser();
+      const { data } = await supabase.auth.getSession();
+      const sessionUser = data?.session?.user;
 
-      if (token && user) {
-        setAuth(user);
+      if (sessionUser) {
+        setAuth(toAuthUser(sessionUser));
         registerPushToken();
         router.replace("/home");
       } else {
@@ -81,6 +78,17 @@ const MainLayout = () => {
     };
 
     checkAuth();
+
+    // If the session ends anywhere (signOut, refresh-token revoked), always
+    // land back on the welcome screen.
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        setAuth(null);
+        router.replace("/welcome");
+      }
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
