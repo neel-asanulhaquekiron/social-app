@@ -6,7 +6,7 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
-import { patchCommentCount } from "@/lib/postCache";
+import { patchCommentCount, updateCachedPost } from "@/lib/postCache";
 import { unsubscribeFromChannel } from "@/lib/supabase";
 import { queryKeys, unwrap } from "@/lib/queryClient";
 import {
@@ -105,10 +105,24 @@ const Home = () => {
   useEffect(() => {
     if (!user?.id) return undefined;
 
-    // New/removed posts change the list itself, so refetch it.
-    const postChannel = subscribeToPosts(() =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.allPosts }),
-    );
+    const postChannel = subscribeToPosts((payload) => {
+      // An edited body doesn't change which posts belong in the list (or
+      // where), so patch it rather than refetching every loaded page. The
+      // payload carries raw columns only; spreading over the cached row keeps
+      // the joined user and the counts.
+      if (payload.eventType === "UPDATE" && payload.new?.id) {
+        updateCachedPost(queryClient, payload.new.id, (post) => ({
+          ...post,
+          ...payload.new,
+        }));
+        return;
+      }
+
+      // INSERT/DELETE change list membership — and whether a new post belongs
+      // in the active username filter is the server's decision, so refetch
+      // instead of guessing client-side.
+      queryClient.invalidateQueries({ queryKey: queryKeys.allPosts });
+    });
 
     // Comment counts are patched in place — invalidating an infinite query
     // refetches every loaded page, which is far too much for a counter.
