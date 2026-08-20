@@ -284,6 +284,9 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: "center",
     alignItems: "center",
     gap: 12,
+    // The full-screen loading branch returns this outside ScreenWrapper, so it
+    // needs its own background or it shows white in dark mode.
+    backgroundColor: theme.colors.background,
   },
   container: {
     flex: 1,
