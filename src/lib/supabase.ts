@@ -1,5 +1,6 @@
 import { supabasePublishableKey, supabaseUrl } from "@/constants";
 import { LargeSecureStore } from "@/lib/largeSecureStore";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient, processLock } from "@supabase/supabase-js";
 import { AppState, Platform } from "react-native";
 import "react-native-url-polyfill/auto";
@@ -17,7 +18,7 @@ export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
 
 /** Lives here, not in a service, so every service can use it without one
  * feature module importing another just for a teardown helper. */
-export const unsubscribeFromChannel = (channel) => {
+export const unsubscribeFromChannel = (channel: RealtimeChannel | null) => {
   if (channel) {
     supabase.removeChannel(channel);
   }
@@ -27,18 +28,19 @@ export const unsubscribeFromChannel = (channel) => {
  * Status handler for `channel.subscribe()`. Without one, a channel that fails
  * to join stays silent forever and looks exactly like "nothing happened yet".
  */
-export const channelStatusLogger = (label) => (status, error) => {
-  if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-    console.warn(
-      `[realtime] ${label}: ${status}${error ? ` — ${error.message}` : ""}`,
-    );
-    return;
-  }
+export const channelStatusLogger =
+  (label: string) => (status: string, error?: Error) => {
+    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+      console.warn(
+        `[realtime] ${label}: ${status}${error ? ` — ${error.message}` : ""}`,
+      );
+      return;
+    }
 
-  if (__DEV__) {
-    console.log(`[realtime] ${label}: ${status}`);
-  }
-};
+    if (__DEV__) {
+      console.log(`[realtime] ${label}: ${status}`);
+    }
+  };
 
 // Tells Supabase Auth to continuously refresh the session automatically
 // if the app is in the foreground. When this is added, you will continue

@@ -15,7 +15,7 @@ export const isExpoGoAndroid = isExpoGo && Platform.OS === "android";
 const EXPO_GO_ANDROID_MESSAGE =
   "Push notifications unavailable in Expo Go on Android (SDK 53+)";
 
-export const setNotificationHandler = () => {
+export const setNotificationHandler = (): void => {
   if (isExpoGoAndroid) {
     console.log(EXPO_GO_ANDROID_MESSAGE);
     return;
@@ -31,12 +31,14 @@ export const setNotificationHandler = () => {
   });
 };
 
-export const clearNotificationBadge = async () => {
+export const clearNotificationBadge = async (): Promise<void> => {
   if (isExpoGoAndroid) return;
   await Notifications.setBadgeCountAsync(0);
 };
 
-export const registerForPushNotificationsAsync = async () => {
+export const registerForPushNotificationsAsync = async (): Promise<
+  string | null
+> => {
   if (isExpoGoAndroid) {
     console.log(EXPO_GO_ANDROID_MESSAGE);
     return null;
@@ -72,7 +74,7 @@ export const registerForPushNotificationsAsync = async () => {
 
   const projectId =
     Constants?.expoConfig?.extra?.eas?.projectId ??
-    Constants?.easConfig?.projectId;
+    (Constants as any)?.easConfig?.projectId;
 
   if (!projectId) {
     console.error("Missing EAS projectId; cannot get Expo push token");
