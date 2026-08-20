@@ -1,7 +1,11 @@
+import { useTheme } from "@/hooks/useTheme";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// `bg` defaults to the themed background so a screen that forgets to pass it
+// cannot end up transparent over a light surface.
 const ScreenWrapper = ({ children, bg, scrollable = true }) => {
+  const theme = useTheme();
   const { top, bottom } = useSafeAreaInsets();
   const paddingTop = top > 0 ? top + 5 : 30;
 
@@ -22,7 +26,7 @@ const ScreenWrapper = ({ children, bg, scrollable = true }) => {
     <KeyboardAvoidingView
       style={{
         flex: 1,
-        backgroundColor: bg,
+        backgroundColor: bg ?? theme.colors.background,
         paddingTop,
         paddingBottom: bottom,
       }}

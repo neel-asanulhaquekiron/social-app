@@ -1,11 +1,13 @@
 import NotificationDeepLink from "@/components/NotificationDeepLink";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   isExpoGoAndroid,
   setNotificationHandler,
 } from "@/services/notificationPermissions";
+import * as SystemUI from "expo-system-ui";
 import { Stack, usePathname } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Alert, BackHandler } from "react-native";
@@ -26,7 +28,18 @@ const _layout = () => {
 
 const MainLayout = () => {
   const { user, isReady } = useAuth();
+  const theme = useTheme();
   const pathname = usePathname();
+
+  // The window background sits behind everything React renders. It stayed at
+  // its default light colour, which is what showed as a white band above the
+  // keyboard once KeyboardAvoidingView shrank the content, and as a white
+  // flash before the first screen painted.
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(theme.colors.background).catch((error) => {
+      console.error("Error setting system background:", error);
+    });
+  }, [theme]);
   const pathnameRef = useRef(pathname);
 
   useEffect(() => {
@@ -69,7 +82,14 @@ const MainLayout = () => {
         null user. On sign-out the protected history is dropped and the router
         falls back to the anchor route, which redirects to /welcome.
       */}
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          // Navigator screen container; without this every screen sits on a
+          // white surface regardless of what the screen itself paints.
+          contentStyle: { backgroundColor: theme.colors.background },
+        }}
+      >
         <Stack.Protected guard={isReady && !!user}>
           <Stack.Screen name="(main)" />
         </Stack.Protected>
