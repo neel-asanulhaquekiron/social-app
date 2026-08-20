@@ -1,12 +1,13 @@
 import { supabasePublishableKey, supabaseUrl } from "@/constants";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LargeSecureStore } from "@/lib/largeSecureStore";
 import { createClient, processLock } from "@supabase/supabase-js";
 import { AppState, Platform } from "react-native";
 import "react-native-url-polyfill/auto";
 
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
   auth: {
-    ...(Platform.OS !== "web" ? { storage: AsyncStorage } : {}),
+    // Encrypted at rest: AES key in SecureStore, ciphertext in AsyncStorage.
+    ...(Platform.OS !== "web" ? { storage: new LargeSecureStore() } : {}),
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
