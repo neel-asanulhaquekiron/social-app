@@ -6,8 +6,8 @@ const { notifyPostOwner, enqueue } = require("../services/notificationService");
 // reach the JSON error handler; models return { success, ... } objects that
 // sendResult maps to status codes.
 class PostController {
-  static async createOrUpdatePost(req, res) {
-    const result = await Post.createOrUpdatePost({
+  static async createPost(req, res) {
+    const result = await Post.createPost({
       ...req.body,
       userId: req.user.id,
     });

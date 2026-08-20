@@ -6,7 +6,7 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { queryKeys } from "@/lib/queryClient";
-import { createOrUpdatePost } from "@/services/postService";
+import { createPost } from "@/services/postService";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useRef, useState } from "react";
@@ -35,7 +35,7 @@ const NewPost = () => {
     }
 
     setLoading(true);
-    const res = await createOrUpdatePost({ body });
+    const res = await createPost({ body });
     setLoading(false);
 
     if (res.success) {

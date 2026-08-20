@@ -39,20 +39,8 @@ class PostValidator {
   });
 
   /**
-   * POST /posts/:postId/like
-   * DELETE /posts/:postId/like
-   */
-  static likePostParamsSchema = z.object({
-    postId: z.coerce.number().int().positive(),
-  });
-
-  /**
    * POST /posts/:postId/comment
    */
-  static createCommentParamsSchema = z.object({
-    postId: z.coerce.number().int().positive(),
-  });
-
   static createCommentBodySchema = z.object({
     text: z
       .string()
