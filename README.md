@@ -1,354 +1,252 @@
 # Mini Social Feed App
 
-A lightweight social media application built with **Supabase** (PostgreSQL + Auth) backend and **React Native (Expo)** mobile app. Users can post updates, interact with a shared feed through likes and comments, and receive real-time push notifications via **Expo Push Notifications** (FCM).
+A social feed built with **Expo (SDK 57)** and a **Node/Express** API on top of **Supabase** (PostgreSQL + Auth + Realtime). Users post updates, like and comment on a shared feed, and receive push notifications through **Expo Push Notifications** (FCM on Android).
 
 ---
 
-## 📁 Project Structure
+## Architecture
+
+```
+Expo app ──► Supabase Auth        (sign up / sign in / session refresh)
+   │
+   │  Authorization: Bearer <Supabase access token>
+   ▼
+Express API ──► Supabase (service-role key, bypasses RLS)
+   │
+   └─► Expo Push Service ──► FCM / APNs
+
+Expo app ◄── Supabase Realtime    (postgres_changes, authenticated)
+```
+
+Two things are worth knowing up front:
+
+- **The app authenticates directly with Supabase Auth.** The API never sees a password; it only _verifies_ the Supabase access token (ES256) against the project's JWKS endpoint. There are no `/auth` routes.
+- **All data access goes through the API**, which uses the service-role key. The client touches Supabase directly only for Auth and Realtime, so row-level security is written for exactly that: read access for Realtime, and per-user rules for everything else.
+
+---
+
+## Project structure
 
 ```
 social-app/
-├── src/                          # React Native (Expo) mobile app
-│   ├── app/                      # Expo Router screens & navigation
-│   ├── components/               # Reusable UI components
-│   ├── constants/                # App constants (colors, sizes, config)
-│   ├── helpers/                  # Helper functions & utilities
-│   ├── lib/                      # Third-party library configurations
-│   ├── services/                 # API calls, auth, notifications
-│   └── utils/                    # General utility functions
-├── server/                       # Node.js + Express backend
-│   ├── config/                   # Database, Firebase, environment config
-│   ├── controllers/              # Route handlers & business logic
-│   ├── middlewares/              # Auth, validation, error handling
-│   ├── models/                   # Supabase queries & data access
-│   ├── routes/                   # API route definitions
-│   ├── utils/                    # Server-side utility functions
-│   ├── validators/               # Joi validation schemas
-│   └── server.js                 # Entry point
-├── app.json                      # Expo configuration
-├── package.json
-└── README.md                     # This file
+├── src/                     # Expo app
+│   ├── app/                 # expo-router screens; (main) is the authed group
+│   ├── components/          # Presentational components
+│   ├── context/             # AuthContext (session + isReady)
+│   ├── helpers/             # Dimensions, date formatting, zod schemas
+│   ├── hooks/               # useFeed, useLike, useUnseenCount, useRealtimeFeed
+│   ├── lib/                 # supabase client, query client, cache patching
+│   ├── services/            # apiClient + one module per resource
+│   ├── types/               # Shared API types
+│   └── __tests__/           # jest-expo tests
+├── server/                  # Express API
+│   ├── app.js               # Builds the app (imported by tests)
+│   ├── server.js            # Starts it
+│   ├── config/              # Validated env, logger, Supabase clients
+│   ├── controllers/         # Thin: unwrap the request, call a model
+│   ├── middlewares/         # auth (JWKS), validate (zod), error handler
+│   ├── models/              # All Supabase queries
+│   ├── router/              # Route definitions
+│   ├── utils/               # Result envelope, cursor pagination, asyncHandler
+│   └── __tests__/           # jest + supertest
+└── supabase/migrations/     # SQL migrations, applied in order
 ```
 
 ---
 
-## 🚀 Live Deployment
-
-| Service         | URL                                                           |
-| --------------- | ------------------------------------------------------------- |
-| **Backend API** | `https://social-app-d3of.onrender.com` _(deployed on Render)_ |
-
----
-
-<!-- ## 🔧 Backend Setup
+## Getting started
 
 ### Prerequisites
 
-- Node.js >= 18.x
-- Supabase account & project
-- Expo account (for push notifications)
+- Node 20+
+- A Supabase project
+- **A development build** — Expo Go cannot receive Android push notifications (removed in SDK 53), and this app uses native modules (`expo-secure-store`, `expo-notifications`).
 
-### Installation
+### 1. Install
 
 ```bash
-cd server
 npm install
+cd server && npm install && cd ..
 ```
 
-### Environment Variables
-
-Create a `.env` file in the `server/` directory:
-
-```env
-PORT=5000
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-JWT_SECRET=your_jwt_secret_key
-EXPO_ACCESS_TOKEN=your_expo_access_token
-```
-
-> **Note:** Get your Supabase credentials from Project Settings → API.
-> **Expo Access Token:** Generate from [Expo Dashboard](https://expo.dev/settings/access-tokens) for server-side push notification delivery.
-
-### Running the Server
+### 2. Configure the app
 
 ```bash
-# Development
-npm run dev
-
-# Production
-npm start
+cp .env.example .env
 ```
 
-Server runs at `http://localhost:5000`
+| Variable                        | Purpose                                         |
+| ------------------------------- | ----------------------------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`      | `https://<project-ref>.supabase.co`             |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Publishable/anon key                            |
+| `EXPO_PUBLIC_API_BASE_URL`      | Base URL of the Express API (no trailing slash) |
 
---- -->
+`EXPO_PUBLIC_*` values are inlined at build time, so restart with `npx expo start -c` after changing them. The app fails fast at startup naming any variable that is missing.
 
-## 📡 API Documentation
+### 3. Configure the server
 
-### Authentication
-
-| Method | Endpoint           | Description           |
-| ------ | ------------------ | --------------------- |
-| `POST` | `/api/auth/signup` | Register a new user   |
-| `POST` | `/api/auth/login`  | Login and receive JWT |
-
-**Signup Request:**
-
-```json
-{
-  "username": "johndoe",
-  "email": "john@example.com",
-  "password": "securepassword123"
-}
+```bash
+cp server/.env.example server/.env
 ```
 
-**Login Response:**
+| Variable                    | Required | Purpose                                                     |
+| --------------------------- | -------- | ----------------------------------------------------------- |
+| `SUPABASE_URL`              | yes      | Same project URL                                            |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes      | **Secret.** Bypasses RLS — never ship it to the client      |
+| `PORT`                      | no       | Defaults to 4000                                            |
+| `NODE_ENV`                  | no       | `development` gives pretty logs and detailed error messages |
+| `CORS_ORIGINS`              | no       | Comma-separated browser origins; native apps send no Origin |
+| `LOG_LEVEL`                 | no       | pino level, defaults to `info`                              |
 
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "johndoe",
-    "email": "john@example.com"
-  }
-}
+### 4. Apply migrations
+
+Run the files in `supabase/migrations/` in filename order (Supabase SQL Editor or `supabase db push`). They are written to be re-runnable.
+
+### 5. Run
+
+```bash
+cd server && npm start     # API on :4000
+npx expo start             # app (use a development build)
 ```
 
 ---
 
+## API
+
+Base URL is the server root — **there is no `/api` prefix**. Every response is JSON shaped as `{ success: true, ... }` or `{ success: false, msg, code? }`.
+
+Authentication is `Authorization: Bearer <Supabase access token>`.
+
 ### Posts
 
-| Method   | Endpoint                     | Description                               | Auth |
-| -------- | ---------------------------- | ----------------------------------------- | ---- |
-| `POST`   | `/api/posts`                 | Create a new text post                    | Yes  |
-| `GET`    | `/api/posts`                 | Fetch all posts (paginated, newest first) | No   |
-| `GET`    | `/api/posts/:postId`         | Fetch a single post by ID                 | No   |
-| `POST`   | `/api/posts/:postId/like`    | Like a post                               | Yes  |
-| `DELETE` | `/api/posts/:postId/like`    | Unlike a post                             | Yes  |
-| `POST`   | `/api/posts/:postId/comment` | Add a comment                             | Yes  |
+| Method   | Endpoint                                 | Auth     | Notes                                                 |
+| -------- | ---------------------------------------- | -------- | ----------------------------------------------------- |
+| `GET`    | `/posts?limit=&cursor=&username=`        | optional | Keyset pagination; a token makes `likedByMe` accurate |
+| `GET`    | `/posts/:postId`                         | optional |                                                       |
+| `GET`    | `/posts/:postId/comments?limit=&cursor=` | no       |                                                       |
+| `POST`   | `/posts`                                 | yes      | Body `{ "body": "..." }`                              |
+| `POST`   | `/posts/:postId/like`                    | yes      | Idempotent                                            |
+| `DELETE` | `/posts/:postId/like`                    | yes      |                                                       |
+| `POST`   | `/posts/:postId/comment`                 | yes      | Body `{ "text": "..." }`                              |
+| `DELETE` | `/posts/:postId/comment/:commentId`      | yes      | Comment author or post owner                          |
 
-**Create Post Request:**
-
-```json
-{
-  "body": "Hello, this is my first post!"
-}
-```
-
-**Fetch Posts Response:**
+Posts carry scalar counts rather than embedded rows:
 
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": 24,
-      "created_at": "2026-07-19T05:52:16.35737+00:00",
-      "body": "ertyuiop",
-      "userId": "2c75e728-c154-4e0f-b3e7-62fcddcab5ce",
-      "user": {
-        "id": "2c75e728-c154-4e0f-b3e7-62fcddcab5ce",
-        "name": "asanul"
-      },
-      "postLikes": [
-        {
-          "id": 21,
-          "postId": 24,
-          "userId": "2c75e728-c154-4e0f-b3e7-62fcddcab5ce",
-          "created_at": "2026-07-19T11:12:29.337281+00:00"
-        },
-        {
-          "id": 27,
-          "postId": 24,
-          "userId": "cc573a58-c3de-4f53-a9ce-ee315f3cd7b5",
-          "created_at": "2026-07-19T11:22:33.215786+00:00"
-        }
-      ],
-      "comments": [
-        {
-          "count": 3
-        }
-      ]
+      "id": 43,
+      "body": "Hello world",
+      "userId": "2c75e728-…",
+      "created_at": "2026-08-20T08:05:43.123456+00:00",
+      "user": { "id": "2c75e728-…", "name": "Alice" },
+      "likeCount": 3,
+      "commentCount": 1,
+      "likedByMe": true
     }
-  ]
+  ],
+  "nextCursor": "MjAyNi0wOC0yMHwx"
 }
 ```
 
----
-
-### Notifications
-
-| Method  | Endpoint                                      | Description                   | Auth |
-| ------- | --------------------------------------------- | ----------------------------- | ---- |
-| `POST`  | `/api/notifications`                          | Create a notification         | Yes  |
-| `GET`   | `/api/notifications/:receiverId`              | Fetch user's notifications    | Yes  |
-| `GET`   | `/api/notifications/unseen-count/:receiverId` | Get unseen notification count | Yes  |
-| `PATCH` | `/api/notifications/:notificationId`          | Mark notification as read     | Yes  |
-
----
+Pass `nextCursor` back as `cursor` for the next page; `null` means the list is exhausted.
 
 ### Users
 
-| Method | Endpoint                       | Description              | Auth |
-| ------ | ------------------------------ | ------------------------ | ---- |
-| `GET`  | `/api/users/:userId`           | Get user profile data    | Yes  |
-| `POST` | `/api/users/registerPushToken` | Register Expo push token | Yes  |
+| Method   | Endpoint                   | Auth | Notes                      |
+| -------- | -------------------------- | ---- | -------------------------- |
+| `GET`    | `/users/me`                | yes  | Full profile of the caller |
+| `GET`    | `/users/:userId`           | yes  | Public profile             |
+| `POST`   | `/users/registerPushToken` | yes  | Bound to the token's user  |
+| `DELETE` | `/users/pushToken`         | yes  | Called on logout           |
+
+### Notifications
+
+| Method  | Endpoint                                 | Auth | Notes                |
+| ------- | ---------------------------------------- | ---- | -------------------- |
+| `GET`   | `/notifications?limit=&cursor=`          | yes  | Scoped to the caller |
+| `GET`   | `/notifications/unseen-count`            | yes  |                      |
+| `POST`  | `/notifications/mark-seen`               | yes  | Idempotent           |
+| `PATCH` | `/notifications/:notificationId/clicked` | yes  |                      |
+
+### Health
+
+`GET /health` → `{ "status": "ok", "uptime": 42 }`
 
 ---
 
-<!-- ## 📱 Mobile App Setup
+## Push notifications
 
-### Prerequisites
+Android delivery needs all three of these, and it fails silently if any is missing:
 
-- Node.js >= 18.x
-- Expo CLI: `npm install -g expo-cli`
-- Expo Go app (iOS/Android) or a **development build** (required for push notifications on Android SDK 53+)
+1. `google-services.json` at the repo root, wired up via `expo.android.googleServicesFile`
+2. An **FCM V1 service account key** uploaded to EAS (`eas credentials -p android`)
+3. A development or production build — not Expo Go
 
-### Installation
+For iOS, upload an APNs key with `eas credentials -p ios`.
 
-```bash
-npm install
-```
+The notification icon must be a **monochrome white-on-transparent** PNG (Android renders anything else as a solid square); this project uses `assets/images/android-icon-monochrome.png`.
 
-### Environment Variables
+---
 
-Create a `.env` file in the project root:
+## Environment variables for EAS builds
 
-```env
-EXPO_PUBLIC_API_URL=https://your-app.onrender.com
-EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-### Running the App
+Build profiles in `eas.json` name an `environment` (`development` / `preview` / `production`). Create the variables once per environment so builds don't depend on a local `.env`:
 
 ```bash
-# Start Expo development server
-npx expo start
-
-# Run on Android
-npx expo start --android
-
-# Run on iOS
-npx expo start --ios
+eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value "https://<ref>.supabase.co"
+eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "<anon key>"
+eas env:create --environment production --name EXPO_PUBLIC_API_BASE_URL --value "https://<api host>"
 ```
 
-> **⚠️ Push Notifications on Android:** Starting with Expo SDK 53, Android push notifications require a [development build](https://docs.expo.dev/develop/development-builds/introduction/). Expo Go no longer supports remote notifications on Android. Use `expo-dev-client` and EAS Build for testing push notifications.
+Repeat for `development` and `preview`. Optionally upload `google-services.json` as a file-type variable (`GOOGLE_SERVICES_JSON`) instead of committing it.
 
-### Expo Plugins Configuration
-
-Ensure your `app.json` includes all required plugins:
-
-```json
-{
-  "expo": {
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "color": "#ffffff"
-        }
-      ]
-    ]
-  }
-}
-```
-
-### Building for Production
+Build:
 
 ```bash
-# Install expo-dev-client for development builds
-npx expo install expo-dev-client
-
-# Create development build
-npx expo prebuild
-eas build --profile development
-
-# Create production APK
-npx expo prebuild
+eas build --profile development --platform android
+eas build --profile development-simulator --platform ios   # iOS simulator build
 eas build --profile production --platform android
 ```
 
---- -->
+---
 
-## 🔔 Push Notification Flow
+## Scripts
 
-1. **User Login** — App requests push notification permissions via `expo-notifications`
-2. **Token Registration** — On grant, app retrieves Expo Push Token
-3. **Store Token** — Token is sent to backend via `POST /api/users/registerPushToken` and stored in Supabase
-4. **Trigger Event** — When someone likes/comments on a post:
-   - Backend creates a notification record in Supabase
-   - Backend sends push via Expo Push Service using `expo-server-sdk`
-   - Post author receives real-time push notification
+| Command                 | What it does                                |
+| ----------------------- | ------------------------------------------- |
+| `npm run lint`          | ESLint (flat config), zero warnings allowed |
+| `npm run format`        | Prettier write                              |
+| `npm run typecheck`     | `tsc --noEmit`                              |
+| `npm test`              | jest-expo client tests                      |
+| `cd server && npm test` | jest + supertest API tests                  |
+
+CI runs all of these on every pull request (`.github/workflows/ci.yml`).
 
 ---
 
-## 🗄️ Database Schema (Supabase)
+## Security notes
 
-### Tables
-
-| Table           | Description                                                    |
-| --------------- | -------------------------------------------------------------- |
-| `users`         | User accounts (managed by Supabase Auth + custom profile data) |
-| `posts`         | Text posts with author reference                               |
-| `likes`         | Many-to-many relationship between users and posts              |
-| `comments`      | Comments on posts with author reference                        |
-| `notifications` | Push notification records with read status                     |
-| `push_tokens`   | Expo push tokens per user                                      |
+- The **service-role key bypasses RLS**. It belongs only in the server's environment — never in the app or in `EXPO_PUBLIC_*`.
+- RLS policies are per-user: you can only read your own `users` row and your own notifications, and you can only write rows you own. Posts, comments and likes are readable by signed-in users because Realtime needs `SELECT`.
+- The API derives identity from the verified token, never from the request body.
 
 ---
 
-## 🛡️ Security Features
+## Tech stack
 
-- **JWT Authentication** — All protected routes require a valid Bearer token
-- **Supabase Row Level Security (RLS)** — Database-level access control
-- **Input Validation** — Schemas validate all request bodies, params, and queries
-- **Password Hashing** — Handled by Supabase Auth (bcrypt)
-- **CORS Enabled** — Configured for production frontend/mobile origins
-
----
-
-## 🧪 Testing
-
-Create your own accounts via the app's sign-up screen (or Supabase Auth dashboard) — no shared credentials are published here.
+| Layer   | Choices                                                           |
+| ------- | ----------------------------------------------------------------- |
+| Mobile  | React Native, Expo SDK 57, expo-router, TanStack Query            |
+| Backend | Node, Express 5, zod, pino, helmet                                |
+| Data    | Supabase (PostgreSQL, Auth, Realtime), keyset pagination          |
+| Push    | expo-server-sdk, FCM (Android), APNs (iOS)                        |
+| Tooling | TypeScript, ESLint 10 flat config, Prettier, jest, GitHub Actions |
 
 ---
 
-## 🛠️ Tech Stack
+## Author
 
-| Layer                  | Technology                             |
-| ---------------------- | -------------------------------------- |
-| **Backend**            | Node.js, Express                       |
-| **Database**           | Supabase (PostgreSQL)                  |
-| **Authentication**     | Supabase Auth, JWT                     |
-| **Push Notifications** | Expo Push Notifications (FCM/APNs)     |
-| **Validation**         | Zod                                    |
-| **Mobile**             | React Native, Expo SDK 53, Expo Router |
-| **State Management**   | React Context                          |
-| **Styling**            | React Native StyleSheet                |
-
-## 👤 Author
-
-**Your Name**  
-GitHub: [@neel-asanulhaquekiron](https://github.com/neel-asanulhaquekiron)  
-Email: asanulhaquekiron@gmail.com
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+[@neel-asanulhaquekiron](https://github.com/neel-asanulhaquekiron)

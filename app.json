@@ -9,7 +9,11 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.asanulhaquekironsteam.asanulhaque"
+      "bundleIdentifier": "com.asanulhaquekironsteam.asanulhaque",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -39,8 +43,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/splash-icon.png",
-          "color": "#ffffff"
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#00C26F"
         }
       ],
       "expo-secure-store",
