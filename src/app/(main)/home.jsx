@@ -1,6 +1,6 @@
 import HomeHeader from "@/components/HomeHeader";
+import { ListState } from "@/components/ListStates";
 import Input from "@/components/Input";
-import Loading from "@/components/Loading";
 import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { theme } from "@/constants/theme";
@@ -49,46 +49,19 @@ const Home = () => {
 
   const renderItem = useCallback(({ item }) => <PostCard item={item} />, []);
 
-  const renderFooter = () => {
-    if (isLoading) {
-      return (
-        <View style={styles.footerSpace}>
-          <Loading />
-        </View>
-      );
-    }
-
-    if (isError) {
-      return (
-        <View style={styles.footerSpace}>
-          <Text style={styles.emptyText}>
-            {error?.message || "Could not load posts"}
-          </Text>
-          <Pressable
-            onPress={() => refetch()}
-            style={styles.retryButton}
-            accessibilityRole="button"
-          >
-            <Text style={styles.retryText}>Try again</Text>
-          </Pressable>
-        </View>
-      );
-    }
-
-    if (posts.length === 0) {
-      return <Text style={styles.emptyText}>No posts found</Text>;
-    }
-
-    if (isFetchingNextPage) {
-      return (
-        <View style={styles.footerSpace}>
-          <Loading />
-        </View>
-      );
-    }
-
-    return <Text style={styles.noMoreText}>No more posts</Text>;
-  };
+  const renderFooter = () => (
+    <ListState
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      isEmpty={posts.length === 0}
+      isFetchingMore={isFetchingNextPage}
+      emptyMessage="No posts found"
+      errorMessage="Could not load posts"
+      endMessage="No more posts"
+      onRetry={refetch}
+    />
+  );
 
   return (
     <ScreenWrapper bg="white" scrollable={false}>
