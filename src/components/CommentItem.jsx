@@ -1,8 +1,8 @@
 import Avatar from "@/components/Avatar";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { formatShortDate } from "@/helpers/date";
 import { Ionicons } from "@expo/vector-icons";
-import moment from "moment";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 const CommentItem = ({
@@ -11,7 +11,7 @@ const CommentItem = ({
   onDelete,
   highlight = false,
 }) => {
-  const createdAt = moment(item?.created_at).format("MMM D");
+  const createdAt = formatShortDate(item?.created_at);
 
   const handleDelete = () => {
     Alert.alert("Confirm", "Are you sure you want to delete this comment?", [
