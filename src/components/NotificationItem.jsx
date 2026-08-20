@@ -1,11 +1,11 @@
 import Avatar from "@/components/Avatar";
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { formatShortDate } from "@/helpers/date";
 import { queryKeys } from "@/lib/queryClient";
 import { markNotificationAsClicked } from "@/services/notificationServices";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import moment from "moment";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // `data` is jsonb from the API (object); tolerate legacy JSON strings too.
@@ -23,7 +23,7 @@ const NotificationItem = ({ item }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { id, title, data, sender, created_at, isClicked } = item || {};
-  const createdAt = moment(created_at).format("MMM D");
+  const createdAt = formatShortDate(created_at);
 
   /** Flips isClicked in the cached pages so the row updates immediately. */
   const markClickedInCache = () =>

@@ -1,9 +1,9 @@
 import { theme } from "@/constants/theme";
 import { hp } from "@/helpers/common";
+import { formatShortDate } from "@/helpers/date";
 import { useLike } from "@/hooks/useLike";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import moment from "moment";
 import { memo, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Avatar from "./Avatar";
@@ -27,7 +27,7 @@ const PostCard = ({
   const liked = !!item?.likedByMe;
   const likeCount = item?.likeCount ?? 0;
   const commentCount = item?.commentCount ?? 0;
-  const createdAt = moment(item?.created_at).format("MMM D");
+  const createdAt = formatShortDate(item?.created_at);
 
   const openPostDetails = () => {
     if (!disableDetailsNavigation) {
