@@ -1,6 +1,5 @@
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import * as Device from "expo-device";
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 
 // Expo Go reports "storeClient"; development builds (expo-dev-client) and
@@ -15,25 +14,22 @@ export const isExpoGoAndroid = isExpoGo && Platform.OS === "android";
 const EXPO_GO_ANDROID_MESSAGE =
   "Push notifications unavailable in Expo Go on Android (SDK 53+)";
 
-export const setNotificationHandler = (): void => {
-  if (isExpoGoAndroid) {
-    console.log(EXPO_GO_ANDROID_MESSAGE);
-    return;
+/**
+ * expo-notifications must never be imported at module scope: in Expo Go on
+ * Android it *throws on import*. This module is reached from authService ->
+ * AuthContext -> every screen, so a module-scope import took the whole app
+ * down there. Each entry point below is guarded by isExpoGoAndroid, so the
+ * import only ever runs where the module is usable.
+ */
+type NotificationsModule = typeof import("expo-notifications");
+
+let cached: NotificationsModule | null = null;
+
+const getNotifications = async (): Promise<NotificationsModule> => {
+  if (!cached) {
+    cached = await import("expo-notifications");
   }
-
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowList: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
-  });
-};
-
-export const clearNotificationBadge = async (): Promise<void> => {
-  if (isExpoGoAndroid) return;
-  await Notifications.setBadgeCountAsync(0);
+  return cached;
 };
 
 export type PushPermissionStatus = "granted" | "denied" | "undetermined";
@@ -43,6 +39,7 @@ export const getPushPermissionStatus =
   async (): Promise<PushPermissionStatus> => {
     if (isExpoGoAndroid || !Device.isDevice) return "denied";
 
+    const Notifications = await getNotifications();
     const { status } = await Notifications.getPermissionsAsync();
     return status as PushPermissionStatus;
   };
@@ -55,9 +52,34 @@ export const requestPushPermission =
   async (): Promise<PushPermissionStatus> => {
     if (isExpoGoAndroid || !Device.isDevice) return "denied";
 
+    const Notifications = await getNotifications();
     const { status } = await Notifications.requestPermissionsAsync();
     return status as PushPermissionStatus;
   };
+
+export const setNotificationHandler = async (): Promise<void> => {
+  if (isExpoGoAndroid) {
+    console.log(EXPO_GO_ANDROID_MESSAGE);
+    return;
+  }
+
+  const Notifications = await getNotifications();
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+};
+
+export const clearNotificationBadge = async (): Promise<void> => {
+  if (isExpoGoAndroid) return;
+
+  const Notifications = await getNotifications();
+  await Notifications.setBadgeCountAsync(0);
+};
 
 /**
  * Returns an Expo push token, or null.
@@ -78,6 +100,8 @@ export const registerForPushNotificationsAsync = async ({
     console.log("Push notifications require a physical device");
     return null;
   }
+
+  const Notifications = await getNotifications();
 
   // On Android the channel must exist before requesting a token.
   if (Platform.OS === "android") {

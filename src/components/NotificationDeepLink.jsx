@@ -1,5 +1,4 @@
 import { useAuth } from "@/context/AuthContext";
-import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { useEffect, useRef } from "react";
 
@@ -12,9 +11,13 @@ import { useEffect, useRef } from "react";
  * cold-start taps to /home. Renders nothing.
  *
  * Only mounted outside Expo Go on Android (see `isExpoGoAndroid`), so the hook
- * order stays stable.
+ * order stays stable — and so this require() is safe. expo-notifications
+ * throws on import in Expo Go on Android, so it must not be imported at
+ * module scope: doing that crashed the whole app there.
  */
 const NotificationDeepLink = () => {
+  const Notifications = require("expo-notifications");
+
   const router = useRouter();
   const { user, isReady } = useAuth();
   const response = Notifications.useLastNotificationResponse();
@@ -53,7 +56,7 @@ const NotificationDeepLink = () => {
         ...(data.commentId ? { commentId: String(data.commentId) } : {}),
       },
     });
-  }, [isReady, user, response, router]);
+  }, [isReady, user, response, router, Notifications]);
 
   return null;
 };
