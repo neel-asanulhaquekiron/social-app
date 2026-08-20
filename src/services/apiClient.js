@@ -7,7 +7,7 @@ export async function authFetch(url, options = {}) {
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
 
-  return fetch(url, {
+  const res = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -17,4 +17,13 @@ export async function authFetch(url, options = {}) {
       ...options.headers,
     },
   });
+
+  // We sent a token the server no longer accepts (revoked / stale session):
+  // end the session. The SIGNED_OUT listener in _layout resets the auth
+  // context and navigates to /welcome, so every screen recovers the same way.
+  if (res.status === 401 && token) {
+    supabase.auth.signOut().catch(() => {});
+  }
+
+  return res;
 }
