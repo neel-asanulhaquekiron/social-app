@@ -42,7 +42,7 @@ describe("api client", () => {
   });
 
   it("returns the parsed body on success", async () => {
-    global.fetch = jest
+    globalThis.fetch = jest
       .fn()
       .mockResolvedValue(
         respond(200, JSON.stringify({ success: true, data: [1] })),
@@ -57,7 +57,7 @@ describe("api client", () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValue(respond(200, JSON.stringify({ success: true })));
-    global.fetch = fetchMock;
+    globalThis.fetch = fetchMock;
 
     await api.get("/posts");
 
@@ -72,7 +72,7 @@ describe("api client", () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValue(respond(200, JSON.stringify({ success: true })));
-    global.fetch = fetchMock;
+    globalThis.fetch = fetchMock;
 
     await api.get("/posts");
 
@@ -80,7 +80,7 @@ describe("api client", () => {
   });
 
   it("turns a non-2xx JSON body into a failure carrying the server message", async () => {
-    global.fetch = jest
+    globalThis.fetch = jest
       .fn()
       .mockResolvedValue(
         respond(404, JSON.stringify({ success: false, msg: "Post not found" })),
@@ -96,7 +96,7 @@ describe("api client", () => {
   });
 
   it("does not throw on an HTML error page", async () => {
-    global.fetch = jest
+    globalThis.fetch = jest
       .fn()
       .mockResolvedValue(respond(502, "<html>Bad Gateway</html>"));
 
@@ -107,7 +107,7 @@ describe("api client", () => {
   });
 
   it("signs out on a 401 when a token was sent", async () => {
-    global.fetch = jest
+    globalThis.fetch = jest
       .fn()
       .mockResolvedValue(
         respond(401, JSON.stringify({ success: false, msg: "no" })),
@@ -120,7 +120,7 @@ describe("api client", () => {
 
   it("does not sign out on a 401 when no token was sent", async () => {
     withSession(null);
-    global.fetch = jest
+    globalThis.fetch = jest
       .fn()
       .mockResolvedValue(
         respond(401, JSON.stringify({ success: false, msg: "no" })),
@@ -134,7 +134,7 @@ describe("api client", () => {
   it("reports a timeout distinctly from a network failure", async () => {
     const abortError = new Error("aborted");
     abortError.name = "AbortError";
-    global.fetch = jest.fn().mockRejectedValue(abortError);
+    globalThis.fetch = jest.fn().mockRejectedValue(abortError);
 
     const result = await api.get("/posts");
 
@@ -143,7 +143,9 @@ describe("api client", () => {
   });
 
   it("reports an unreachable server", async () => {
-    global.fetch = jest.fn().mockRejectedValue(new TypeError("fetch failed"));
+    globalThis.fetch = jest
+      .fn()
+      .mockRejectedValue(new TypeError("fetch failed"));
 
     const result = await api.get("/posts");
 
@@ -154,7 +156,7 @@ describe("api client", () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValue(respond(201, JSON.stringify({ success: true })));
-    global.fetch = fetchMock;
+    globalThis.fetch = fetchMock;
 
     await api.post("/posts", { body: "hi" });
 
@@ -168,7 +170,7 @@ describe("api client", () => {
     const fetchMock = jest
       .fn()
       .mockResolvedValue(respond(200, JSON.stringify({ success: true })));
-    global.fetch = fetchMock;
+    globalThis.fetch = fetchMock;
 
     await api.delete("/posts/1/like");
 
