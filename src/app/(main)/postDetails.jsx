@@ -35,17 +35,18 @@ const PostDetails = () => {
   const [sendingComment, setSendingComment] = useState(false);
 
   const getPostDetails = async () => {
-    try {
-      const { error, data } = await fetchPostById(postId);
-      if (error) {
-        console.error("Error fetching post details:", error);
-        return;
-      }
-      setPostDetails(data);
+    // The API answers { success, data, msg } — the old `{ error }` check was
+    // always falsy, so a failed fetch silently rendered an empty post.
+    const { success, data, msg } = await fetchPostById(postId);
+
+    if (!success) {
+      console.error("Error fetching post details:", msg);
       setStartLoading(false);
-    } catch (error) {
-      console.error("Error fetching post details:", error);
+      return;
     }
+
+    setPostDetails(data);
+    setStartLoading(false);
   };
 
   const onNewComment = async () => {
