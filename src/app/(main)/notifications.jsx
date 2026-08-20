@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import Loading from "@/components/Loading";
+import { ListState } from "@/components/ListStates";
 import NotificationItem from "@/components/NotificationItem";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
@@ -15,7 +15,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, View } from "react-native";
 
 const PAGE_SIZE = 20;
 
@@ -68,27 +68,18 @@ const Notifications = () => {
     [],
   );
 
-  const renderFooter = () => {
-    if (isLoading || isFetchingNextPage) {
-      return <Loading />;
-    }
-
-    if (isError) {
-      return (
-        <Text style={styles.noNotificationsText}>
-          {error?.message || "Could not load notifications"}
-        </Text>
-      );
-    }
-
-    if (notifications.length === 0) {
-      return (
-        <Text style={styles.noNotificationsText}>No notifications found.</Text>
-      );
-    }
-
-    return null;
-  };
+  const renderFooter = () => (
+    <ListState
+      isLoading={isLoading}
+      isError={isError}
+      error={error}
+      isEmpty={notifications.length === 0}
+      isFetchingMore={isFetchingNextPage}
+      emptyMessage="No notifications yet"
+      errorMessage="Could not load notifications"
+      onRetry={refetch}
+    />
+  );
 
   return (
     <ScreenWrapper bg="white">
@@ -130,11 +121,5 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingVertical: 20,
     gap: 5,
-  },
-  noNotificationsText: {
-    textAlign: "center",
-    marginTop: 20,
-    fontSize: 16,
-    color: "gray",
   },
 });

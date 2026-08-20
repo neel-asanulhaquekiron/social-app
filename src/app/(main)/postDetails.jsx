@@ -1,6 +1,7 @@
 import CommentItem from "@/components/CommentItem";
 import Header from "@/components/Header";
 import Input from "@/components/Input";
+import { ErrorState, ListState, LoadingState } from "@/components/ListStates";
 import Loading from "@/components/Loading";
 import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
@@ -62,6 +63,9 @@ const PostDetails = () => {
   const {
     data: commentPages,
     isLoading: commentsLoading,
+    isError: commentsError,
+    error: commentsErrorValue,
+    refetch: refetchComments,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -143,7 +147,7 @@ const PostDetails = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <Loading />
+        <LoadingState />
       </View>
     );
   }
@@ -155,12 +159,10 @@ const PostDetails = () => {
 
         {isError && (
           <View style={styles.loadingContainer}>
-            <Text style={styles.mutedText}>
-              {error?.message || "Post not found"}
-            </Text>
-            <Pressable onPress={() => refetch()} style={styles.retryButton}>
-              <Text style={styles.retryText}>Try again</Text>
-            </Pressable>
+            <ErrorState
+              message={error?.message || "Could not load this post"}
+              onRetry={refetch}
+            />
           </View>
         )}
 
@@ -220,13 +222,15 @@ const PostDetails = () => {
                 />
               ))}
 
-              {commentsLoading && <Loading size="small" />}
-
-              {!commentsLoading && comments.length === 0 && (
-                <Text style={styles.mutedText}>
-                  Be the first to comment on this post!
-                </Text>
-              )}
+              <ListState
+                isLoading={commentsLoading}
+                isError={commentsError}
+                error={commentsErrorValue}
+                isEmpty={comments.length === 0}
+                emptyMessage="Be the first to comment on this post!"
+                errorMessage="Could not load comments"
+                onRetry={refetchComments}
+              />
 
               {hasNextPage && (
                 <Pressable
