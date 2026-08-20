@@ -14,15 +14,13 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { FlatList, StyleSheet, Text, View } from "react-native";
 
 const PAGE_SIZE = 20;
 
 const Notifications = () => {
   const { user } = useAuth();
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const {
@@ -64,6 +62,11 @@ const Notifications = () => {
     }
     // Only re-run when the first load finishes; markSeen is idempotent.
   }, [isLoading, isError]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const renderItem = useCallback(
+    ({ item }) => <NotificationItem item={item} />,
+    [],
+  );
 
   const renderFooter = () => {
     if (isLoading || isFetchingNextPage) {
@@ -108,9 +111,7 @@ const Notifications = () => {
             }
           }}
           ListFooterComponent={renderFooter}
-          renderItem={({ item }) => (
-            <NotificationItem item={item} router={router} />
-          )}
+          renderItem={renderItem}
         />
       </View>
     </ScreenWrapper>

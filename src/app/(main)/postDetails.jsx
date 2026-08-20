@@ -25,7 +25,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useEffect, useRef } from "react";
 import {
   Alert,
@@ -41,7 +41,6 @@ const COMMENTS_PAGE_SIZE = 20;
 const PostDetails = () => {
   const { postId, commentId } = useLocalSearchParams();
   const { user } = useAuth();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const inputRef = useRef(null);
   const commentRef = useRef("");
@@ -178,8 +177,6 @@ const PostDetails = () => {
           >
             <PostCard
               item={postDetails}
-              currentUser={user}
-              router={router}
               hasShadow={false}
               disableDetailsNavigation={true}
             />

@@ -4,6 +4,7 @@ import { hp } from "@/helpers/common";
 import { queryKeys } from "@/lib/queryClient";
 import { markNotificationAsClicked } from "@/services/notificationServices";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
 import moment from "moment";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -18,7 +19,8 @@ const parseNotificationData = (data) => {
   }
 };
 
-const NotificationItem = ({ item, router }) => {
+const NotificationItem = ({ item }) => {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const { id, title, data, sender, created_at, isClicked } = item || {};
   const createdAt = moment(created_at).format("MMM D");
