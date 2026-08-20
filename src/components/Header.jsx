@@ -21,10 +21,21 @@ const Header = ({
     onLogOut();
   };
 
+  // Opened straight from a notification tap there may be nothing to go back
+  // to, and router.back() would be a no-op that traps the user.
+  const handleBackPress = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/home");
+  };
+
   return (
     <View style={[styles.container, { marginBottom: mb }]}>
       {showBackButton && (
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <Pressable onPress={handleBackPress} style={styles.backButton}>
           <Ionicons
             name="chevron-back-outline"
             size={hp(3.2)}

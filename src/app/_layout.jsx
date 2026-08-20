@@ -1,13 +1,12 @@
+import NotificationDeepLink from "@/components/NotificationDeepLink";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { registerPushToken, toAuthUser } from "@/services/authService";
+import { registerPushToken } from "@/services/authService";
 import {
-  addNotificationResponseListener,
+  isExpoGoAndroid,
   setNotificationHandler,
 } from "@/services/notificationPermissions";
-import { getUserData } from "@/services/userService";
-import { Stack, useFocusEffect, usePathname, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef } from "react";
+import { Stack, usePathname } from "expo-router";
+import { useEffect, useRef } from "react";
 import { Alert, BackHandler } from "react-native";
 
 // Must run at module load so foreground notifications are displayed
@@ -23,92 +22,68 @@ const _layout = () => {
 };
 
 const MainLayout = () => {
-  const { setAuth, setUserData } = useAuth();
-  const router = useRouter();
+  const { user, isReady } = useAuth();
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
-
-  const updateUserData = async (user) => {
-    const res = await getUserData(user?.id);
-    if (res.success) {
-      setUserData(res.data);
-    }
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        if (pathnameRef.current !== "/home") {
-          return false;
-        }
-
-        Alert.alert("Exit App", "Are you sure you want to exit?", [
-          { text: "Cancel", style: "cancel" },
-          { text: "Exit", onPress: () => BackHandler.exitApp() },
-        ]);
-        return true;
-      };
-
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress,
-      );
-
-      return () => subscription.remove();
-    }, []),
-  );
 
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
 
+  // Root-level hardware back handling: a plain effect, since the root layout
+  // is never blurred (useFocusEffect would re-subscribe on every navigation).
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      const sessionUser = data?.session?.user;
-
-      if (sessionUser) {
-        setAuth(toAuthUser(sessionUser));
-        registerPushToken();
-        router.replace("/home");
-      } else {
-        setAuth(null);
-        router.replace("/welcome");
+    const onBackPress = () => {
+      if (pathnameRef.current !== "/home") {
+        return false;
       }
+
+      Alert.alert("Exit App", "Are you sure you want to exit?", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Exit", onPress: () => BackHandler.exitApp() },
+      ]);
+      return true;
     };
 
-    checkAuth();
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress,
+    );
 
-    // If the session ends anywhere (signOut, refresh-token revoked), always
-    // land back on the welcome screen.
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        setAuth(null);
-        router.replace("/welcome");
-      }
-    });
-
-    return () => sub.subscription.unsubscribe();
+    return () => subscription.remove();
   }, []);
 
+  // Bind this device's push token to whoever is signed in (login, signup and
+  // restored sessions all pass through here).
   useEffect(() => {
-    let unsubscribe = () => {};
+    if (user?.id) {
+      registerPushToken();
+    }
+  }, [user?.id]);
 
-    addNotificationResponseListener((data) => {
-      if (data?.postId) {
-        router.push({
-          pathname: "postDetails",
-          params: { postId: data.postId },
-        });
-      }
-    }).then((fn) => {
-      unsubscribe = fn;
-    });
+  return (
+    <>
+      {/*
+        Declarative guards: authed screens simply do not exist while signed
+        out (and vice versa), so a deep link can never render `(main)` with a
+        null user. On sign-out the protected history is dropped and the router
+        falls back to the anchor route, which redirects to /welcome.
+      */}
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={isReady && !!user}>
+          <Stack.Screen name="(main)" />
+        </Stack.Protected>
 
-    return () => unsubscribe();
-  }, []);
+        <Stack.Protected guard={isReady && !user}>
+          <Stack.Screen name="welcome" />
+          <Stack.Screen name="login" />
+          <Stack.Screen name="signup" />
+        </Stack.Protected>
+      </Stack>
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+      {!isExpoGoAndroid && <NotificationDeepLink />}
+    </>
+  );
 };
 
 export default _layout;

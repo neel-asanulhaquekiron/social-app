@@ -23,7 +23,7 @@ const NotificationItem = ({ item, router, setNotifications }) => {
   const handleClick = async () => {
     const parsed = parseNotificationData(data);
     const { postId, commentId } = parsed;
-    router.push({ pathname: "postDetails", params: { postId, commentId } });
+    router.push({ pathname: "/postDetails", params: { postId, commentId } });
     if (!isClicked && id) {
       setNotifications((prevNotifications) =>
         prevNotifications.map((notification) =>
