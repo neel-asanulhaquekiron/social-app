@@ -4,17 +4,30 @@ import {
   clearNotificationBadge,
   registerForPushNotificationsAsync,
 } from "@/services/notificationPermissions";
+import type { AuthUser } from "@/types/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { User } from "@supabase/supabase-js";
 import { api } from "./apiClient";
 
+type AuthOutcome =
+  { success: true; user: AuthUser } | { success: false; msg: string };
+
 // Shape the app uses everywhere: { id, email, name }.
-export const toAuthUser = (authUser) => ({
+export const toAuthUser = (authUser: User): AuthUser => ({
   id: authUser.id,
   email: authUser.email,
-  name: authUser.user_metadata?.name ?? null,
+  name: (authUser.user_metadata?.name as string | undefined) ?? null,
 });
 
-export const signup = async ({ email, password, name }) => {
+export const signup = async ({
+  email,
+  password,
+  name,
+}: {
+  email: string;
+  password: string;
+  name: string;
+}): Promise<AuthOutcome> => {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -66,11 +79,20 @@ export const signup = async ({ email, password, name }) => {
     return { success: true, user: toAuthUser(data.user) };
   } catch (error) {
     console.error("Error signing up:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
+    return {
+      success: false,
+      msg: (error as Error).message || "Something went wrong",
+    };
   }
 };
 
-export const login = async ({ email, password }) => {
+export const login = async ({
+  email,
+  password,
+}: {
+  email: string;
+  password: string;
+}): Promise<AuthOutcome> => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -90,15 +112,19 @@ export const login = async ({ email, password }) => {
     return { success: true, user: toAuthUser(data.user) };
   } catch (error) {
     console.error("Error logging in:", error);
-    return { success: false, msg: error.message || "Something went wrong" };
+    return {
+      success: false,
+      msg: (error as Error).message || "Something went wrong",
+    };
   }
 };
 
-export const unregisterPushToken = () => api.delete("/users/pushToken");
+export const unregisterPushToken = () =>
+  api.delete<Record<string, never>>("/users/pushToken");
 
 // Full teardown: stop pushes for this device, drop realtime channels, clear
 // the badge, then end the Supabase session. Best-effort — always ends signed out.
-export const logout = async () => {
+export const logout = async (): Promise<void> => {
   try {
     await unregisterPushToken(); // needs the session, so do it first
   } catch (error) {
@@ -130,18 +156,18 @@ export const logout = async () => {
   await AsyncStorage.multiRemove(["token", "user"]);
 };
 
-export const getToken = async () => {
+export const getToken = async (): Promise<string | null> => {
   const { data } = await supabase.auth.getSession();
   return data?.session?.access_token ?? null;
 };
 
-export const getStoredUser = async () => {
+export const getStoredUser = async (): Promise<AuthUser | null> => {
   const { data } = await supabase.auth.getSession();
   return data?.session?.user ? toAuthUser(data.session.user) : null;
 };
 
 // The server binds the push token to the authenticated user (from the JWT).
-export const registerPushToken = async () => {
+export const registerPushToken = async (): Promise<void> => {
   try {
     const pushToken = await registerForPushNotificationsAsync();
     if (!pushToken) {
