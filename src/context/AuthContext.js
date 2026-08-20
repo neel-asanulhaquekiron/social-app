@@ -52,13 +52,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const value = useMemo(
-    () => ({
-      user,
-      isReady,
-      setAuth: setUser,
-      setUserData: (userData) =>
-        setUser((prevUser) => ({ ...prevUser, ...userData })),
-    }),
+    () => ({ user, isReady, setAuth: setUser }),
     [user, isReady],
   );
 

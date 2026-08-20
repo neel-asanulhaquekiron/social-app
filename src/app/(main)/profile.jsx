@@ -57,11 +57,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  logoutButton: {
-    padding: 6,
-    borderRadius: theme.radius?.sm ?? 8,
-    backgroundColor: "#ffe8e8",
-  },
   body: {
     marginTop: 20,
     alignItems: "center",

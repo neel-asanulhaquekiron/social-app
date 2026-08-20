@@ -61,11 +61,7 @@ const NotificationItem = ({ item, router }) => {
       style={[styles.container, !isClicked && styles.notClicked]}
       onPress={handleClick}
     >
-      <Avatar
-        uri={sender?.image}
-        size={hp(5)}
-        rounded={theme.radius?.md ?? 12}
-      />
+      <Avatar size={hp(5)} color={theme.colors.textLight} />
 
       <View style={styles.nameTitle}>
         <Text style={styles.text}>{sender?.name}</Text>
