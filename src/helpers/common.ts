@@ -9,8 +9,8 @@ import { Dimensions } from "react-native";
 // making those react to size changes means building them inside components
 // from useWindowDimensions(), which is the responsive/font-scaling work in
 // issue #48.
-export const hp = (percentage) =>
+export const hp = (percentage: number): number =>
   (Dimensions.get("window").height * percentage) / 100;
 
-export const wp = (percentage) =>
+export const wp = (percentage: number): number =>
   (Dimensions.get("window").width * percentage) / 100;

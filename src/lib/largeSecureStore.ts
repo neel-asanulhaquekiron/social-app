@@ -11,7 +11,7 @@ import * as SecureStore from "expo-secure-store";
 // Android Keystore). Stealing the AsyncStorage file alone reveals nothing.
 // This is the storage pattern from the official Supabase Expo guide.
 export class LargeSecureStore {
-  async _encrypt(key, value) {
+  private async _encrypt(key: string, value: string): Promise<string> {
     const encryptionKey = crypto.getRandomValues(new Uint8Array(256 / 8));
 
     const cipher = new aesjs.ModeOfOperation.ctr(
@@ -28,7 +28,7 @@ export class LargeSecureStore {
     return aesjs.utils.hex.fromBytes(encryptedBytes);
   }
 
-  async _decrypt(key, value) {
+  private async _decrypt(key: string, value: string): Promise<string | null> {
     const encryptionKeyHex = await SecureStore.getItemAsync(key);
     if (!encryptionKeyHex) {
       return null;
@@ -43,7 +43,7 @@ export class LargeSecureStore {
     return aesjs.utils.utf8.fromBytes(decryptedBytes);
   }
 
-  async getItem(key) {
+  async getItem(key: string): Promise<string | null> {
     const encrypted = await AsyncStorage.getItem(key);
     if (!encrypted) {
       return null;
@@ -58,12 +58,12 @@ export class LargeSecureStore {
     }
   }
 
-  async setItem(key, value) {
+  async setItem(key: string, value: string): Promise<void> {
     const encrypted = await this._encrypt(key, value);
     await AsyncStorage.setItem(key, encrypted);
   }
 
-  async removeItem(key) {
+  async removeItem(key: string): Promise<void> {
     await AsyncStorage.removeItem(key);
     await SecureStore.deleteItemAsync(key);
   }

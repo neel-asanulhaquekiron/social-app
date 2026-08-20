@@ -20,10 +20,10 @@ if (missing.length > 0) {
   );
 }
 
-export const supabaseUrl = required.EXPO_PUBLIC_SUPABASE_URL;
-export const supabasePublishableKey = required.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+export const supabaseUrl = required.EXPO_PUBLIC_SUPABASE_URL as string;
+export const supabasePublishableKey =
+  required.EXPO_PUBLIC_SUPABASE_ANON_KEY as string;
 // Trailing slash trimmed so `${API_BASE_URL}/posts` can never become "//posts".
-export const API_BASE_URL = required.EXPO_PUBLIC_API_BASE_URL.replace(
-  /\/+$/,
-  "",
-);
+export const API_BASE_URL = (
+  required.EXPO_PUBLIC_API_BASE_URL as string
+).replace(/\/+$/, "");

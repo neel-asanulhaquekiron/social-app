@@ -7,7 +7,9 @@ const shortDate = new Intl.DateTimeFormat("en-US", {
 });
 
 /** "Aug 20", or an empty string for a missing/unparseable value. */
-export const formatShortDate = (value) => {
+export const formatShortDate = (
+  value?: string | number | Date | null,
+): string => {
   if (!value) return "";
 
   const date = new Date(value);
