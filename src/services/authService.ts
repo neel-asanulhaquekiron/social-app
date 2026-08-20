@@ -125,24 +125,17 @@ export const unregisterPushToken = () =>
 // Full teardown: stop pushes for this device, drop realtime channels, clear
 // the badge, then end the Supabase session. Best-effort — always ends signed out.
 export const logout = async (): Promise<void> => {
+  // Needs a live session, so it genuinely has to precede signOut — but it must
+  // never be able to block it, hence the timeout inside apiClient.
   try {
-    await unregisterPushToken(); // needs the session, so do it first
+    await unregisterPushToken();
   } catch (error) {
     console.error("Error during logout cleanup:", error);
   }
 
-  try {
-    await supabase.removeAllChannels();
-  } catch (error) {
-    console.error("Error removing realtime channels:", error);
-  }
-
-  try {
-    await clearNotificationBadge();
-  } catch (error) {
-    console.error("Error clearing notification badge:", error);
-  }
-
+  // Sign out BEFORE any realtime teardown. removeAllChannels() waits for an
+  // unsubscribe ack from the server, which never arrives on a dead socket —
+  // and anything awaited before signOut delays the whole logout.
   try {
     await supabase.auth.signOut();
   } catch (error) {
@@ -154,6 +147,15 @@ export const logout = async (): Promise<void> => {
 
   // Legacy storage from the pre-Supabase-Auth builds.
   await AsyncStorage.multiRemove(["token", "user"]);
+
+  // Best-effort cleanup, deliberately not awaited: the user is already signed
+  // out and the UI has already moved on.
+  supabase.removeAllChannels().catch((error) => {
+    console.error("Error removing realtime channels:", error);
+  });
+  clearNotificationBadge().catch((error) => {
+    console.error("Error clearing notification badge:", error);
+  });
 };
 
 export const getToken = async (): Promise<string | null> => {

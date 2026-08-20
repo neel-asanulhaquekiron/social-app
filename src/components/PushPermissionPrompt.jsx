@@ -2,7 +2,7 @@ import { hp } from "@/helpers/common";
 import { registerPushToken } from "@/services/authService";
 import { makeStyles, useTheme } from "@/hooks/useTheme";
 import {
-  getPushPermissionStatus,
+  getPushPermission,
   requestPushPermission,
 } from "@/services/notificationPermissions";
 import { Ionicons } from "@expo/vector-icons";
@@ -20,7 +20,9 @@ const DISMISSED_KEY = "pushPromptDismissed";
  * being asked. This card explains first and only calls the OS dialog when the
  * user taps Enable. Dismissal is remembered so it never nags.
  *
- * Renders nothing unless permission is genuinely undetermined.
+ * Shows whenever the OS would still accept a prompt (`canAskAgain`), not just
+ * on "undetermined": Android never reports "undetermined", so keying off that
+ * meant this card never appeared on Android at all.
  */
 const PushPermissionPrompt = () => {
   const styles = useStyles();
@@ -32,20 +34,26 @@ const PushPermissionPrompt = () => {
     let cancelled = false;
 
     (async () => {
-      const [status, dismissed] = await Promise.all([
-        getPushPermissionStatus(),
+      const [permission, dismissed] = await Promise.all([
+        getPushPermission(),
         AsyncStorage.getItem(DISMISSED_KEY),
       ]);
 
       if (cancelled) return;
 
       // Already granted: register quietly, no UI.
-      if (status === "granted") {
+      if (permission.status === "granted") {
         registerPushToken();
         return;
       }
 
-      setVisible(status === "undetermined" && !dismissed);
+      // No point offering it where push cannot work (emulator, Expo Go on
+      // Android), or where the OS will no longer show its dialog.
+      if (permission.unsupported || !permission.canAskAgain) {
+        return;
+      }
+
+      setVisible(!dismissed);
     })();
 
     return () => {
