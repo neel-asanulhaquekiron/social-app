@@ -7,6 +7,7 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp, wp } from "@/helpers/common";
 import { patchCommentCount } from "@/lib/postCache";
+import { unsubscribeFromChannel } from "@/lib/supabase";
 import { queryKeys, unwrap } from "@/lib/queryClient";
 import {
   getUnseenNotificationCount,
@@ -16,7 +17,6 @@ import {
   fetchPosts,
   subscribeToAllComments,
   subscribeToPosts,
-  unsubscribeFromChannel,
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -219,7 +219,7 @@ const Home = () => {
         {/* posts */}
         <FlatList
           data={posts}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => String(item?.id ?? index)}
           contentContainerStyle={styles.listStyle}
           showsVerticalScrollIndicator={false}
           refreshControl={

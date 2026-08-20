@@ -8,6 +8,7 @@ import { theme } from "@/constants/theme";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
 import { patchCommentCount } from "@/lib/postCache";
+import { unsubscribeFromChannel } from "@/lib/supabase";
 import { queryKeys, unwrap } from "@/lib/queryClient";
 import {
   createComment,
@@ -16,7 +17,6 @@ import {
   fetchPostById,
   subscribeToComments,
   subscribeToPostLikes,
-  unsubscribeFromChannel,
 } from "@/services/postService";
 import { Ionicons } from "@expo/vector-icons";
 import {
