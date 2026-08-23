@@ -326,3 +326,21 @@ describe("happy paths", () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe("push token rebinding", () => {
+  it("moves a token to the caller rather than leaving it on the previous owner", async () => {
+    User.registerPushToken.mockResolvedValue(ok({}));
+
+    await request(app)
+      .post("/users/registerPushToken")
+      .set("Authorization", auth(OTHER_USER))
+      .send({ pushToken: "ExponentPushToken[shared]" });
+
+    // The controller must pass the caller's id; the model releases the token
+    // from anyone else holding it.
+    expect(User.registerPushToken).toHaveBeenCalledWith(
+      OTHER_USER.id,
+      "ExponentPushToken[shared]",
+    );
+  });
+});

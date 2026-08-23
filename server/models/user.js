@@ -21,6 +21,23 @@ class User {
 
   static async registerPushToken(userId, pushToken) {
     try {
+      // A device carries one Expo token. When a second account signs in on
+      // that device the token must MOVE, not be copied: leaving it on the
+      // previous owner meant their notifications were delivered to whoever
+      // was signed in now.
+      const { error: releaseError } = await supabase
+        .from("users")
+        .update({ pushToken: null })
+        .eq("pushToken", pushToken)
+        .neq("id", userId);
+
+      if (releaseError) {
+        return dbError(
+          "releasing push token from previous owner",
+          releaseError,
+        );
+      }
+
       const { error } = await supabase
         .from("users")
         .update({ pushToken })
