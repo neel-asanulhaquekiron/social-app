@@ -1,5 +1,5 @@
 import { useAuth } from "@/context/AuthContext";
-import { patchCommentCount, updateCachedPost } from "@/lib/postCache";
+import { applyCommentEvent, updateCachedPost } from "@/lib/postCache";
 import { queryKeys } from "@/lib/queryClient";
 import { unsubscribeFromChannel } from "@/lib/supabase";
 import { subscribeToNotifications } from "@/services/notificationServices";
@@ -42,19 +42,10 @@ export const useRealtimeFeed = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.allPosts });
     });
 
-    const commentChannel = subscribeToAllComments((payload) => {
-      const postId = payload?.new?.postId ?? payload?.old?.postId;
-      const delta =
-        payload.eventType === "INSERT"
-          ? 1
-          : payload.eventType === "DELETE"
-            ? -1
-            : 0;
-
-      if (postId && delta !== 0) {
-        patchCommentCount(queryClient, postId, delta);
-      }
-    });
+    // Counts are adjusted here and nowhere else — see applyCommentEvent.
+    const commentChannel = subscribeToAllComments((payload) =>
+      applyCommentEvent(queryClient, payload),
+    );
 
     const notificationChannel = subscribeToNotifications(user.id, () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.unseenCount });

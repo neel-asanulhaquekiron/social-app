@@ -62,3 +62,32 @@ export const patchCommentCount = (
     ...post,
     commentCount: Math.max((post.commentCount ?? 0) + delta, 0),
   }));
+
+/**
+ * Applies a realtime `comments` event to the cached counts.
+ *
+ * This is the ONLY place a comment changes a count. Mutations must not also
+ * patch: realtime delivers your own insert and delete back to you, so a
+ * mutation that patched as well moved the count by two.
+ */
+export const applyCommentEvent = (
+  queryClient: QueryClient,
+  payload: {
+    eventType?: string;
+    new?: { postId?: number | string } | null;
+    old?: { postId?: number | string } | null;
+  },
+) => {
+  const postId = payload?.new?.postId ?? payload?.old?.postId;
+
+  const delta =
+    payload?.eventType === "INSERT"
+      ? 1
+      : payload?.eventType === "DELETE"
+        ? -1
+        : 0;
+
+  if (postId === undefined || postId === null || delta === 0) return;
+
+  patchCommentCount(queryClient, postId, delta);
+};

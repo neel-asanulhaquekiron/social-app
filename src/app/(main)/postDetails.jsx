@@ -7,7 +7,6 @@ import PostCard from "@/components/PostCard";
 import ScreenWrapper from "@/components/ScreenWrapper";
 import { useAuth } from "@/context/AuthContext";
 import { hp } from "@/helpers/common";
-import { patchCommentCount } from "@/lib/postCache";
 import { unsubscribeFromChannel } from "@/lib/supabase";
 import { queryKeys, unwrap } from "@/lib/queryClient";
 import { makeStyles, useTheme } from "@/hooks/useTheme";
@@ -113,8 +112,10 @@ const PostDetails = () => {
       // The server creates the owner's notification + push after a comment.
       inputRef?.current?.clear();
       commentRef.current = "";
+      // Deliberately no count patch here. The realtime comments channel
+      // delivers this insert back to us and adjusts the count; doing it in
+      // both places moved the counter by two.
       queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
-      patchCommentCount(queryClient, postId, 1);
     },
     onError: (mutationError) =>
       Alert.alert("Comment", mutationError.message || "Something went wrong"),
@@ -128,8 +129,8 @@ const PostDetails = () => {
         return;
       }
 
+      // Same as above: realtime owns the count.
       queryClient.invalidateQueries({ queryKey: queryKeys.comments(postId) });
-      patchCommentCount(queryClient, postId, -1);
     },
     onError: (mutationError) =>
       Alert.alert("Comment", mutationError.message || "Something went wrong"),
