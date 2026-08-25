@@ -7,6 +7,7 @@ import {
   isExpoGoAndroid,
   setNotificationHandler,
 } from "@/services/notificationPermissions";
+import { StatusBar } from "expo-status-bar";
 import * as SystemUI from "expo-system-ui";
 import { Stack, usePathname } from "expo-router";
 import { useEffect, useRef } from "react";
@@ -76,6 +77,13 @@ const MainLayout = () => {
 
   return (
     <>
+      {/*
+        One StatusBar for the whole app. Rendered per-screen it was missing
+        from every `(main)` screen, so those kept Android's default light icons
+        — invisible against the light background.
+      */}
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
+
       {/*
         Declarative guards: authed screens simply do not exist while signed
         out (and vice versa), so a deep link can never render `(main)` with a
