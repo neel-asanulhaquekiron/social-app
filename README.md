@@ -1,6 +1,6 @@
 # Mini Social Feed App
 
-A social feed built with **Expo (SDK 57)** and a **Node/Express** API on top of **Supabase** (PostgreSQL + Auth + Realtime). Users post updates, like and comment on a shared feed, and receive push notifications through **Expo Push Notifications** (FCM on Android).
+A social feed built with **Expo (SDK 57)** and a **Node/Express** API on top of **Supabase** (PostgreSQL + Auth + Realtime). Users post updates, like and comment on a shared feed, and receive push notifications through **Expo Push Notifications** (FCM on Android). The UI follows the system light/dark setting and respects OS font scaling.
 
 ---
 
@@ -32,12 +32,14 @@ social-app/
 ├── src/                     # Expo app
 │   ├── app/                 # expo-router screens; (main) is the authed group
 │   ├── components/          # Presentational components
+│   ├── constants/           # Light/dark theme tokens, shared constants
 │   ├── context/             # AuthContext (session + isReady)
 │   ├── helpers/             # Dimensions, date formatting, zod schemas
-│   ├── hooks/               # useFeed, useLike, useUnseenCount, useRealtimeFeed
+│   ├── hooks/               # useFeed, useLike, useUnseenCount, useRealtimeFeed, useTheme
 │   ├── lib/                 # supabase client, query client, cache patching
 │   ├── services/            # apiClient + one module per resource
 │   ├── types/               # Shared API types
+│   ├── utils/               # Small shared helpers (logOut)
 │   └── __tests__/           # jest-expo tests
 ├── server/                  # Express API
 │   ├── app.js               # Builds the app (imported by tests)
