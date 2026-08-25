@@ -3,7 +3,6 @@ import ScreenWrapper from "@/components/ScreenWrapper";
 import { hp, wp } from "@/helpers/common";
 import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { Pressable, Text, View } from "react-native";
 
 const Welcome = () => {
@@ -12,7 +11,6 @@ const Welcome = () => {
   const router = useRouter();
   return (
     <ScreenWrapper bg={theme.colors.background}>
-      <StatusBar style="auto" />
       <View style={styles.container}>
         {/* title */}
         <View style={{ gap: 20 }}>

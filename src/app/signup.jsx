@@ -7,7 +7,6 @@ import { signup } from "@/services/authService";
 import { makeStyles, useTheme } from "@/hooks/useTheme";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Alert, Pressable, Text, View } from "react-native";
@@ -48,7 +47,6 @@ const SignUp = () => {
 
   return (
     <ScreenWrapper bg={theme.colors.background}>
-      <StatusBar style="auto" />
       <View style={styles.container}>
         <View>
           <Text style={styles.title}>Let’s, </Text>
